@@ -1,10 +1,12 @@
 {
   "name": "kaggle-tweets",
   "author": "James McGuigan <james.mcguigan@gmail.com>",
+  "engines" : { "node" : ">=14.0.0" },
   "repository": {
     "type": "git",
     "url": "git://https://github.com/JamesMcGuigan/kaggle-tweets.git"
   },
+  "type": "module",
   "dependencies": {
     "@elastic/elasticsearch": "^7.7.1",
     "dotenv": "^8.2.0",

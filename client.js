@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-require('dotenv').config()
-const { Client } = require('@elastic/elasticsearch')
+import dotenv from 'dotenv'
+import elasticsearch from '@elastic/elasticsearch'
+
+dotenv.config()
 
 
-const client = new Client({
+const client = new elasticsearch.Client({
     node: `https://${process.env.USERNAME}:${process.env.PASSWORD}@${process.env.DATABASE}`,
     auth: {
         username: process.env.USERNAME,
@@ -11,4 +13,4 @@ const client = new Client({
     }
 })
 
-module.exports = client
+export default client

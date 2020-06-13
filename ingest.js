@@ -1,8 +1,12 @@
 #!/usr/bin/env node
-require('dotenv').config()
-const fs         = require('fs')
-const neatCsv    = require('neat-csv');
-const client     = require('./client.js')
+// Requires Node v14 or --experimental-modules cli flag
+import dotenv from 'dotenv';
+import fs from 'fs';
+import neatCsv from "neat-csv";
+import client from './client.js';
+
+dotenv.config()
+
 
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/bulk_examples.html
@@ -23,11 +27,12 @@ async function log_index_count(index=process.env.INDEX) {
     console.log(`${count.count} documents in ${process.env.DATABASE}/${index}`)
 }
 
-if (typeof module !== 'undefined' && !module.parent) {
-    (async function() {
-        const filenames = ["./input/test.csv", "./input/train.csv"]
-        await log_index_count(process.env.INDEX)
-        await Promise.all( filenames.map(ingest_file) )
-        await log_index_count(process.env.INDEX)
-    })()
-}
+
+
+// main()
+(async function() {
+    const filenames = ["./input/test.csv", "./input/train.csv"]
+    await log_index_count(process.env.INDEX)
+    await Promise.all( filenames.map(ingest_file) )
+    await log_index_count(process.env.INDEX)
+})()
