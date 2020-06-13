@@ -1,0 +1,14 @@
+// DATA: https://www.kaggle.com/c/nlp-getting-started/data
+// DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html
+{
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "id":       { "type": "integer" },
+      "text":     { "type": "text", fielddata: true },
+      "location": { "type": "keyword" },
+      "keyword":  { "type": "keyword" },
+      "target":   { "type": "integer" }
+    }
+  }
+}
