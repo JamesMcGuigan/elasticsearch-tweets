@@ -1,7 +1,7 @@
 # Kaggle Tweets with ElasticSearch
 - https://www.kaggle.com/c/nlp-getting-started/
 
-# ElasticSearch with Bonzai
+# ElasticSearch with Bonsai
 - Host: https://bonsai.io/
 - ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-7601590568
 - Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana 
