@@ -5,7 +5,6 @@
     "type": "git",
     "url": "git://https://github.com/JamesMcGuigan/kaggle-tweets.git"
   },
-  "type": "module",
   "dependencies": {
     "@elastic/elasticsearch": "^7.7.1",
     "dotenv": "^8.2.0",

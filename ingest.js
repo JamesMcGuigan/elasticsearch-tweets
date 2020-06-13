@@ -2,16 +2,7 @@
 require('dotenv').config()
 const fs         = require('fs')
 const neatCsv    = require('neat-csv');
-const { Client } = require('@elastic/elasticsearch')
-
-
-const client = new Client({
-    node: `https://${process.env.USERNAME}:${process.env.PASSWORD}@${process.env.DATABASE}`,
-    auth: {
-        username: process.env.USERNAME,
-        password: process.env.PASSWORD,
-    }
-})
+const client     = require('./client.js')
 
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/bulk_examples.html
