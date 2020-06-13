@@ -88,3 +88,72 @@ json_pp | grep "key" | awk '{ print $3 }' | tr '\n' ' '
 ```
 "usa" "new" "the" "ca" "york" "london" "united" "canada" "in" "of" "uk" "city" "california" "ny" "san" "england" "washington" "australia" "los" "states" 
 ```
+
+
+## Geolocation API
+- https://developers.google.com/maps/documentation/geocoding/start
+```
+LOCATION="North Druid Hills, GA"
+curl -G "https://maps.googleapis.com/maps/api/geocode/json?key=$GOOGLE_API_KEY" --data-urlencode "address=$LOCATION"  
+```                                                                                                                   
+```
+{
+   "results" : [
+      {
+         "address_components" : [
+            {
+               "long_name" : "North Druid Hills",
+               "short_name" : "North Druid Hills",
+               "types" : [ "locality", "political" ]
+            },
+            {
+               "long_name" : "DeKalb County",
+               "short_name" : "Dekalb County",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Georgia",
+               "short_name" : "GA",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "United States",
+               "short_name" : "US",
+               "types" : [ "country", "political" ]
+            }
+         ],
+         "formatted_address" : "North Druid Hills, GA, USA",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 33.840573,
+                  "lng" : -84.30390589999999
+               },
+               "southwest" : {
+                  "lat" : 33.7997699,
+                  "lng" : -84.3485249
+               }
+            },
+            "location" : {
+               "lat" : 33.816771,
+               "lng" : -84.3132574
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 33.840573,
+                  "lng" : -84.30390589999999
+               },
+               "southwest" : {
+                  "lat" : 33.7997699,
+                  "lng" : -84.3485249
+               }
+            }
+         },
+         "place_id" : "ChIJlXu9ykAG9YgRiAFOs6TzMoA",
+         "types" : [ "locality", "political" ]
+      }
+   ],
+   "status" : "OK"
+}
+```
