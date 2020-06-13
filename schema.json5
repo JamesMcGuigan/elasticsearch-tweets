@@ -6,8 +6,8 @@
     "properties": {
       "id":       { "type": "integer" },
       "text":     { "type": "text", fielddata: true },
-      "location": { "type": "keyword" },
-      "keyword":  { "type": "keyword" },
+      "location": { "type": "text", fielddata: true },
+      "keyword":  { "type": "text", fielddata: true },
       "target":   { "type": "integer" }
     }
   }
