@@ -1,7 +1,15 @@
 {
+  "name": "kaggle-tweets",
+  "author": "James McGuigan <james.mcguigan@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://https://github.com/JamesMcGuigan/kaggle-tweets.git"
+  },
+  "type": "module",
   "dependencies": {
     "@elastic/elasticsearch": "^7.7.1",
-    "env": "^0.0.2",
-    "json5": "^2.1.3"
+    "dotenv": "^8.2.0",
+    "json5": "^2.1.3",
+    "neat-csv": "^5.2.0"
   }
 }

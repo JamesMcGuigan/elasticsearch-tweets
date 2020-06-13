@@ -18,16 +18,19 @@ curl -X GET "$DATABASE_URL"
 }
 ``` 
 
-## Recreate Index
+## Create Index and Reingest
 TODO: create index aliases and reindex with new mapping
 ```
-INDEX='twitter'
-curl -X DELETE "$DATABASE_URL/$INDEX"       
-curl -X PUT    "$DATABASE_URL/$INDEX" --data $(json5 ./schema.json5) -H "Content-Type: application/json"
-curl -X GET    "$DATABASE_URL/_cat/indices"
-```
-```
+bash ./schema.sh     
+node ./ingest.js
+```  
+``` 
 {"acknowledged":true}
 {"acknowledged":true,"shards_acknowledged":true,"index":"twitter"}
-green open twitter k_FDoQRxSM-z_K7J6ZqkBg 1 1 0 0 460b 230b
+green open twitter m3TajAbIRzCn3devhk-kcg 1 1 0 0 460b 230b
+
+0 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+./input/test.csv     ingested 3263 documents in 387ms
+./input/train.csv    ingested 7613 documents in 879ms
+10876 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
 ```
