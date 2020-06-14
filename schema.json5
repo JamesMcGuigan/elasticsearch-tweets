@@ -2,12 +2,18 @@
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html
 {
   "mappings": {
-    "dynamic": false,
+    "dynamic": true,
     "properties": {
       "id":       { "type": "integer" },
       "text":     { "type": "text", fielddata: true },
-      "location": { "type": "text", fielddata: true },
-      "keyword":  { "type": "text", fielddata: true },
+      "location": {
+        "type": "text", fielddata: true,
+        "fields": { "keyword": { "type":  "keyword" } }
+      },
+      "keyword":  {
+        "type": "text", fielddata: true,
+        "fields": { "keyword": { "type":  "keyword" } }
+      },
       "target":   { "type": "integer" }
     }
   }

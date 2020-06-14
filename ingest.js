@@ -7,7 +7,6 @@ import client from './client.js';
 
 dotenv.config()
 
-
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
 // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/bulk_examples.html
 async function ingest_file(filename) {
@@ -16,7 +15,7 @@ async function ingest_file(filename) {
         const csv  = await neatCsv(text, { columns: true, skip_empty_lines: true })
         const body = csv.flatMap(row => [{ index: { _index: process.env.INDEX, '_id': row.id } }, row])
         const { body: bulkResponse } = await client.bulk({ refresh: true, body })
-        console.log(`${filename.padEnd(20)} ingested ${csv.length} documents in ${bulkResponse.took}ms`)
+        console.log(`ingest: ${filename.padEnd(20)} into ${csv.length} documents in ${bulkResponse.took}ms`)
     } catch (error) {
         console.error(error)
     }
@@ -24,7 +23,7 @@ async function ingest_file(filename) {
 
 async function log_index_count(index=process.env.INDEX) {
     const {body: count} = await client.count({index: process.env.INDEX})
-    console.log(`${count.count} documents in ${process.env.DATABASE}/${index}`)
+    console.log(`ingest: ${count.count} documents in ${process.env.DATABASE}/${index}`)
 }
 
 

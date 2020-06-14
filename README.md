@@ -24,16 +24,22 @@ TODO: create index aliases and reindex with new mapping
 ```
 bash ./schema.sh     
 node ./ingest.js
+node ./geocode.js 
 ```  
 ``` 
 {"acknowledged":true}
 {"acknowledged":true,"shards_acknowledged":true,"index":"twitter"}
-green open twitter m3TajAbIRzCn3devhk-kcg 1 1 0 0 460b 230b
+green open twitter   VL30F9hrShu5-qJpTLJEqg 1 1 0 0   460b   230b
+green open .kibana_1 XsYy7txoR8Oa178heSj9OA 1 1 8 0 97.6kb 35.4kb
 
-0 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
-./input/test.csv     ingested 3263 documents in 387ms
-./input/train.csv    ingested 7613 documents in 879ms
-10876 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+ingest: 0 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+ingest: ./input/test.csv     into 3263 documents in 493ms
+ingest: ./input/train.csv    into 7613 documents in 1067ms
+ingest: 10876 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter    
+
+geocode: updated 21 documents in 6ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 44 documents in 11ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 38 documents in 9ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
 ```
 
 
