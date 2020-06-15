@@ -22,7 +22,9 @@
     "now": "^19.1.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-router-dom": "^5.2.0",
     "text-encoding": "^0.7.0",
-    "utf8": "^3.0.0"
+    "utf8": "^3.0.0",
+    "webpack": "^4.43.0"
   }
 }

@@ -1,7 +1,7 @@
 // Source: http://tholman.com/github-corners/
 
 import React, { PureComponent } from 'react';
-import packageJSON from '../../package.json';
+import packageJSON from '../../../package.json';
 
 import './GithubCorner.less';
 
