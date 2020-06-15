@@ -3,7 +3,7 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 import neatCsv from "neat-csv";
-import client from './client.js';
+import client from './client.mjs';
 
 dotenv.config()
 

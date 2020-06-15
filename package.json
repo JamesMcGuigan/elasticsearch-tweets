@@ -1,24 +1,27 @@
 {
-  "name": "kaggle-tweets",
+  "name": "elasticsearch-tweets",
+  "description": "ElasticSearch Analysis of Kaggle Tweets",
   "author": "James McGuigan <james.mcguigan@gmail.com>",
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "repository": {
     "type": "git",
-    "url": "git://https://github.com/JamesMcGuigan/kaggle-tweets.git"
+    "url": "https://github.com/JamesMcGuigan/elasticsearch-tweets.git"
   },
-  "type": "module",
   "dependencies": {
     "@elastic/elasticsearch": "^7.7.1",
+    "@zeit/next-less": "^1.0.1",
     "axios": "^0.19.2",
     "bluebird": "^3.7.2",
     "chardet": "^1.1.0",
     "dotenv": "^8.2.0",
     "fs-jetpack": "^2.4.0",
     "json5": "^2.1.3",
+    "less": "^3.11.3",
     "lodash": "^4.17.15",
     "neat-csv": "^5.2.0",
+    "next": "^9.4.4",
+    "now": "^19.1.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "text-encoding": "^0.7.0",
     "utf8": "^3.0.0"
   }

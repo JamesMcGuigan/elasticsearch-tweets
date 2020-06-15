@@ -2,13 +2,13 @@
 // Spec: Query ElasticSearch, iterate over each row with a location, check filesystem cache,
 //       query Google Geolocation API, Update ElasticSearch with new data, save cache to disk
 
-import client from './client.js';
+import axios from 'axios';
+import Promise from 'bluebird';
 import dotenv from 'dotenv';
 import jetpack from "fs-jetpack";
-import axios from 'axios';
 import _ from 'lodash';
-import Promise from 'bluebird';
 import { performance } from 'perf_hooks';
+import client from './client.mjs';
 
 
 dotenv.config()

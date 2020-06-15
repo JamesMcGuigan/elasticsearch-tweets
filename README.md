@@ -1,10 +1,12 @@
 # Kaggle Tweets with ElasticSearch
-- https://www.kaggle.com/c/nlp-getting-started/
+- Visualization: https://tweets.elasticsearch.jamesmcguigan.com
 
 # ElasticSearch with Bonsai
 - Host: https://bonsai.io/
 - ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-7601590568
-- Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana 
+- Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana
+- Dataset: https://www.kaggle.com/c/nlp-getting-started/ 
+ 
 ```    
 source ./.env
 curl -X GET "$DATABASE_URL"
@@ -23,8 +25,8 @@ curl -X GET "$DATABASE_URL"
 TODO: create index aliases and reindex with new mapping
 ```
 bash ./server/schema.sh     
-node ./server/ingest.js
-node ./server/geocode.js 
+node ./server/ingest.mjs
+node ./server/geocode.mjs 
 ```  
 ``` 
 {"acknowledged":true}

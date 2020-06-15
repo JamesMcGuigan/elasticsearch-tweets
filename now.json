@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "alias": ["tweets.elasticsearch.jamesmcguigan.com"],
+  "builds": [
+    { "src": "package.json", "use": "@now/next" }
+  ]
+}

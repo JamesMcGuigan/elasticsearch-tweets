@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import dotenv from 'dotenv'
 import elasticsearch from '@elastic/elasticsearch'
+import dotenv from 'dotenv'
 
 dotenv.config()
 
