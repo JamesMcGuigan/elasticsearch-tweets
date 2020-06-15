@@ -102,12 +102,19 @@ async function geocode(address) {
     }
 }
 // This creates a filesystem cache around the function, and auto-persists it to disk on node beforeExit
-geocode.cacheFilename = './data/geocode.json';
+geocode.cacheFilename = './cache/geocode.json';
 try   { geocode.cache = JSON.parse(jetpack.read(geocode.cacheFilename)); }
 catch { geocode.cache = {};                                              }
 process.on('beforeExit', () => {
     // DOCS: https://nodejs.org/api/process.html#process_event_beforeexit
-    jetpack.write(geocode.cacheFilename, JSON.stringify(geocode.cache, null, 2))
+    let output = _(geocode.cache)
+        .keys()
+        .sort()
+        .map(key => `${JSON.stringify(key)}: ${JSON.stringify(geocode.cache[key])}`)
+        .join(",\n")
+    ;
+    output = `{\n${output}\n}`
+    jetpack.write(geocode.cacheFilename, output)
 });
 
 
