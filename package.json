@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^7.7.1",
+    "@react-google-maps/api": "^1.9.6",
     "@zeit/next-less": "^1.0.1",
     "axios": "^0.19.2",
     "bluebird": "^3.7.2",
