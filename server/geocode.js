@@ -9,7 +9,6 @@ import axios from 'axios';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import { performance } from 'perf_hooks';
-import { encodeASCII } from "./encoding.js";
 
 
 dotenv.config()
@@ -75,6 +74,13 @@ async function scanAndScrollField(fieldname, callback) {
 }
 
 
+
+// Remove not ASCII chars and decode URL elements
+export function encodeASCII(address) {
+    address = address.replace(/[^\x00-\x7F]/g,"");
+    address = decodeURIComponent(address);
+    return address;
+}
 async function geocode(address) {
     if( address in geocode.cache ) { return geocode.cache[address] }
     try {
