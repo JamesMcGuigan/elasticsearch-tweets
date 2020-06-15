@@ -82,10 +82,10 @@ export function encodeASCII(address) {
     return address;
 }
 async function geocode(address) {
+    address = encodeASCII(address);  // BUGFIX: Invalid request. One of the input parameters contains a non-UTF-8 string.
     if( address in geocode.cache ) { return geocode.cache[address] }
     try {
         // curl -G "https://maps.googleapis.com/maps/api/geocode/json?key=$GOOGLE_API_KEY" --data-urlencode "address=$LOCATION"
-        address = encodeASCII(address);  // BUGFIX: Invalid request. One of the input parameters contains a non-UTF-8 string.
         let response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
             params: {
                 key:     process.env.GOOGLE_API_KEY,
@@ -110,6 +110,7 @@ process.on('beforeExit', () => {
     let output = _(geocode.cache)
         .keys()
         .sort()
+        .mapKeys(encodeASCII)
         .map(key => `${JSON.stringify(key)}: ${JSON.stringify(geocode.cache[key])}`)
         .join(",\n")
     ;
