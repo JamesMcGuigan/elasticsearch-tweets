@@ -22,9 +22,9 @@ curl -X GET "$DATABASE_URL"
 ## Create Index and Reingest
 TODO: create index aliases and reindex with new mapping
 ```
-bash ./schema.sh     
-node ./ingest.js
-node ./geocode.js 
+bash ./server/schema.sh     
+node ./server/ingest.js
+node ./server/geocode.js 
 ```  
 ``` 
 {"acknowledged":true}
