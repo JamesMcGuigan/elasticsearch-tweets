@@ -62,7 +62,7 @@ class TweetHeatMap extends React.Component {
         if( this.state.search.keyword ) {
             query.bool.must.push({ match: { keyword: { query: this.state.search.keyword } }})
         }
-        ElasticsearchService.search({ size: 1000, query: query })
+        ElasticsearchService.search({ size: 2000, query: query })
             .then(tweets => { this.setState({ loading: false, tweets: tweets }) })
             .catch(error => { this.setState({ loading: false, error:  error   }) })
 

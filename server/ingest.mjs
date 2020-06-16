@@ -10,7 +10,6 @@ dotenv.config()
 
 function preprocessCsvRow(row) {
     return _(row)
-        .mapValues((value) => String(value).trim())
         .mapValues((value) => { try { return decodeURIComponent(value) } catch(e) { return value } })
         .mapValues((value) => String(value).match(/^\d+$/) ? Number(value) : value )
         .value()

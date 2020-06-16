@@ -31,17 +31,19 @@ node ./server/geocode.mjs
 ``` 
 {"acknowledged":true}
 {"acknowledged":true,"shards_acknowledged":true,"index":"twitter"}
-green open twitter   VL30F9hrShu5-qJpTLJEqg 1 1 0 0   460b   230b
+green open twitter   Qews-7jyTPGhTCb45z3eyA 1 1 0 0   460b   230b
 green open .kibana_1 XsYy7txoR8Oa178heSj9OA 1 1 8 0 97.6kb 35.4kb
 
 ingest: 0 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
-ingest: ./input/test.csv     into 3263 documents in 493ms
-ingest: ./input/train.csv    into 7613 documents in 1067ms
-ingest: 10876 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter    
-
-geocode: updated 21 documents in 6ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
-geocode: updated 44 documents in 11ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
-geocode: updated 38 documents in 9ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+ingest: ./input/test.csv     into 3263 documents in 421ms
+ingest: ./input/train.csv    into 7613 documents in 990ms
+ingest: 10876 documents in kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 198 documents in 192ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 164 documents in 124ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 228 documents in 161ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 170 documents in 117ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 112 documents in 86ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
+geocode: updated 104 documents in 105ms for kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443/twitter
 ```
 
 
