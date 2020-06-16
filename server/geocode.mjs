@@ -77,8 +77,12 @@ async function scanAndScrollField(fieldname, callback) {
 
 // Remove not ASCII chars and decode URL elements
 export function encodeASCII(address) {
-    address = address.replace(/[^\x00-\x7F]/g,"");
-    address = decodeURIComponent(address);
+    try {
+        address = String(address).replace(/[^\x00-\x7F]/g,"").trim();
+        address = decodeURIComponent(address);  // May throw exception
+    } catch(e) {
+        return address
+    }
     return address;
 }
 async function geocode(address) {
