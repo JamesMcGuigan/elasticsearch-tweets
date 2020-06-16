@@ -8,6 +8,7 @@ export default class MyDocument extends Document {
             <html>
                 <Head>
                     <meta name="viewport" content="initial-scale=1.0, width=device-width" key="viewport"/>
+                    <title>ElasticSearch Visualization of Kaggle Disaster Tweets</title>
                 </Head>
                 <body>
                     <Main/>
