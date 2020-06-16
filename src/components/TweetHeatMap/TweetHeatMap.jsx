@@ -2,9 +2,12 @@
 
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
 import React from 'react'
+import ElasticsearchService from "../../services/ElasticsearchService.js";
 import './TweetHeatMap.less';
 
 function TweetHeatMap() {
+    const tweets = ElasticsearchService.fetchGeocodeTweets()
+    console.log(tweets)
     return (
         <div className='TweetHeatMap'>
             <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_MAPS_API_KEY} >
