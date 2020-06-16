@@ -130,7 +130,7 @@ async function bulkUpdate(documents) {
         refresh: true,
         index:   process.env.INDEX,
         body:    documents.flatMap(row => [
-            { update: { '_id': row.id, _type: "doc" } },
+            { update: { '_id': row.id } },
             { doc: _.omit(row, 'id') }
         ])
     }
@@ -182,7 +182,7 @@ async function main() {
         }));
         locations = locations.filter(row => row.geocode)
 
-        return bulkUpdate(locations)        // Using bulk update syntax
+        return bulkUpdate(locations)  // Using bulk update syntax
         // return clientUpdates(locations)  // Using looped single request update syntax
     })
 }
