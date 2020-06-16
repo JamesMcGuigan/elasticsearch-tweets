@@ -31,7 +31,7 @@ export default class ElasticsearchService {
                     password: process.env.NEXT_PUBLIC_PASSWORD,
                 }
             })
-            return _.get(response, 'data.hits.hits', []);
+            return _.get(response, 'data.hits.hits', []).map(hit => _.get(hit,'_source'));
         } catch(exception) {
             console.error('search()', exception, query);
             return [];
