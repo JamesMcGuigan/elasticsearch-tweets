@@ -1,6 +1,5 @@
 import axios from 'axios';
 import _ from 'lodash';
-import memoize from 'memoizee-decorator';
 
 export default class ElasticsearchService {
 
@@ -17,12 +16,13 @@ export default class ElasticsearchService {
     //// TODO: create serverside proxy to avoid exposing username and password to browser
     static url =`https://${process.env.NEXT_PUBLIC_DATABASE}/${process.env.NEXT_PUBLIC_INDEX}`
 
-    static async search(query) {
+    static async get(endpoint, source) {
         try {
             // DOCS: https://stackoverflow.com/questions/45291983/sending-requests-to-elasticsearch-with-axios
-            let response = await axios.get(this.url+'/_search', {
+            return await axios.get(this.url+'/'+endpoint, {
                 params: {
-                    source: JSON.stringify(query),
+                    // source: JSON.stringify(query),
+                    source: source,
                     source_content_type: 'application/json'
                 },
                 responseType: 'json',
@@ -31,25 +31,38 @@ export default class ElasticsearchService {
                     password: process.env.NEXT_PUBLIC_PASSWORD,
                 }
             })
-            return _.get(response, 'data.hits.hits', []).map(hit => _.get(hit,'_source'));
         } catch(exception) {
-            console.error('search()', exception, query);
-            return [];
+            console.error('get()', endpoint, source, exception);
+            return {};
         }
     }
-
-    @memoize
-    static async fetchGeocodeTweets() {
-        return this.search({
-            "size": 100,
-            "query": {
-                "bool": {
-                    "must": [
-                        { "match":   { "target": 1        } },
-                        { "exists":  { "field": "geocode" } }
-                    ]
+    static async search(query) {
+        let response = await this.get('_search', query)
+        return _.get(response, 'data.hits.hits', []).map(hit => _.get(hit,'_source'));
+    }
+    static async aggregationBuckets(keyword, query={}, size=100) {
+        const result = await this.get('_search',{
+            "size": 0,
+            "query": query,
+            "aggs": {
+                [keyword]: {
+                    "terms": {
+                        "size":  size,
+                        "field": keyword
+                    }
                 }
             }
         })
+        return _.get(result,`data.aggregations.${keyword}.buckets`)
     }
+    static async aggregationTerms(keyword, query={}, size=100) {
+        let buckets = await this.aggregationBuckets(keyword, query, size)
+        return _(buckets)
+            .map(bucket => _.get(bucket,'key'))
+            .filter()
+            .sort()
+            .value()
+        ;
+    }
+
 }
