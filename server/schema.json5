@@ -11,8 +11,7 @@
         "fields": { "keyword": { "type":  "keyword" } }
       },
       "keyword":  {
-        "type": "text", fielddata: true,
-        "fields": { "keyword": { "type":  "keyword" } }
+        "type": "keyword"
       },
       "target":   { "type": "integer" }
     }
