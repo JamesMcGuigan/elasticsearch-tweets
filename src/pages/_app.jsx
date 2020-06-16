@@ -1,5 +1,4 @@
 import * as React from 'react';
-import packageJSON from '../../package.json';
 import GithubCorner from "../components/GithubCorner/GithubCorner.jsx";
 import './_app.less';
 
@@ -9,7 +8,12 @@ const App = ({ Component, pageProps }) => {
         <>
             <GithubCorner/>
             <header>
-                <h1>{packageJSON.description}</h1>
+                <h1>
+                    ElasticSearch Visualization of &nbsp;
+                    <a href='https://www.kaggle.com/c/nlp-getting-started/data?select=train.csv' target='_source'>
+                        Kaggle Disaster Tweets
+                    </a>
+                </h1>
             </header>
             <main>
                 <Component {...pageProps} />

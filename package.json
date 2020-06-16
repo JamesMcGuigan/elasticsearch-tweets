@@ -1,6 +1,6 @@
 {
   "name": "elasticsearch-tweets",
-  "description": "ElasticSearch Analysis of Kaggle Tweets",
+  "description": "ElasticSearch Visualization of Kaggle Disaster Tweets",
   "author": "James McGuigan <james.mcguigan@gmail.com>",
   "repository": {
     "type": "git",

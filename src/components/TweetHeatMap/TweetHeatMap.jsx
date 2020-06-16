@@ -34,8 +34,6 @@ class TweetHeatMap extends React.Component {
     }
 
     render() {
-        console.log("TweetHeatMap.jsx:31:render", "this.state",this.state.tweets);
-
         return (
             <div className='TweetHeatMap'>
                 <div className='loading'>
