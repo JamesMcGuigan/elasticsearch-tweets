@@ -33,7 +33,7 @@ async function ingest_file(filename) {
 
 async function log_index_count(index=process.env.INDEX) {
     const {body: count} = await client.count({index: process.env.INDEX})
-    console.log(`ingest: ${count.count} documents in ${process.env.DATABASE}/${index}`)
+    console.log(`ingest: ${count.count} documents in ${process.env.ELASTICSEARCH}/${index}`)
 }
 
 

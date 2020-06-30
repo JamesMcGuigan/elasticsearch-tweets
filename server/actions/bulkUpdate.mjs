@@ -16,7 +16,7 @@ export async function bulkUpdate(documents) {
     }
     try {
         const { body: bulkResponse } = await client.bulk(bulkParams)
-        console.log(`geocode: updated ${_.get(bulkResponse, 'items.length')} documents in ${bulkResponse.took}ms for ${process.env.DATABASE}/${process.env.INDEX}`)
+        console.log(`geocode: updated ${_.get(bulkResponse, 'items.length')} documents in ${bulkResponse.took}ms for ${process.env.ELASTICSEARCH}/${process.env.INDEX}`)
     } catch(exception) {
         console.error("bulkUpdate() - body", bulkParams);
         console.error("bulkUpdate() - exception", exception);
@@ -46,7 +46,7 @@ export async function clientUpdates(documents) {
         let responses = await Promise.mapSeries(documents, clientUpdate)  // BUGFIX: mapSeries to prevent overloading ElasticSearch
         let successes = responses.filter(response => _.get(response, 'body.result') === 'updated').length;
         let timeTaken = performance.now() - startTime;
-        console.log(`updated ${successes}/${documents.length} documents in ${timeTaken.toFixed(0)}ms for ${process.env.DATABASE}/${process.env.INDEX}`)
+        console.log(`updated ${successes}/${documents.length} documents in ${timeTaken.toFixed(0)}ms for ${process.env.ELASTICSEARCH}/${process.env.INDEX}`)
         return successes
     } catch(exception) {
         console.error("clientUpdates()", exception);

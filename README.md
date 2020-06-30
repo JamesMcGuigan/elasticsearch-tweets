@@ -6,10 +6,20 @@
 - ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-7601590568
 - Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana
 - Dataset: https://www.kaggle.com/c/nlp-getting-started/ 
- 
+
+## .env
+.env secrets are not committed to github  
+```
+cp ./.env.template       ./.env 
+cp ./.env.local.template ./.env.local 
+vim ./.env ./.env.local
+```
+
+## ElasticSearch Status
+So that you know ElasticSearch is up 
 ```    
 source ./.env
-curl -X GET "$DATABASE_URL"
+curl -X GET "$ELASTICSEARCH_URL"
 ```
 ```
 {
@@ -49,11 +59,11 @@ geocode: updated 104 documents in 105ms for kaggle-tweets-7601590568.eu-west-1.b
 
 ## Search Query
 ```   
-curl -s -H "Content-Type: application/json" -X GET $DATABASE_URL/twitter/_search \
+curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
 -d '{ "size": 1, "query": { "match": { "target": 1 } } }' | json_pp 
 ```
 ```
-curl -s -H "Content-Type: application/json" -X GET $DATABASE_URL/twitter/_search \
+curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
 > -d '{ "size": 1, "query": { "match": { "target": 1 } } }' | json_pp 
 {
    "_shards" : {
@@ -91,7 +101,7 @@ curl -s -H "Content-Type: application/json" -X GET $DATABASE_URL/twitter/_search
 
 ## Aggregation Query
 ```
-curl -s -H "Content-Type: application/json" -X GET $DATABASE_URL/twitter/_search \
+curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
 -d '{ "size": 0, "aggs": { "location": { "terms": { "size": 20, "field": "location" } } } }' | 
 json_pp | grep "key" | awk '{ print $3 }' | tr '\n' ' '
 ```

@@ -5,7 +5,7 @@ export default class ElasticsearchService {
 
     //// BUG: ElasticSearch client doesn't work (easily) inside browser
     // static client = new elasticsearch.Client({
-    //     node: `https://${process.env.USERNAME}:${process.env.PASSWORD}@${process.env.DATABASE}`,
+    //     node: `https://${process.env.USERNAME}:${process.env.PASSWORD}@${process.env.ELASTICSEARCH}`,
     //     auth: {
     //         username: process.env.USERNAME,
     //         password: process.env.PASSWORD,
@@ -14,7 +14,7 @@ export default class ElasticsearchService {
 
     //// WORKAROUND: use HTTP interface via Axios
     //// TODO: create serverside proxy to avoid exposing username and password to browser
-    static url =`https://${process.env.NEXT_PUBLIC_DATABASE}/${process.env.NEXT_PUBLIC_INDEX}`
+    static url =`https://${process.env.NEXT_PUBLIC_ELASTICSEARCH}/${process.env.NEXT_PUBLIC_INDEX}`
 
     static async get(endpoint, source) {
         try {
