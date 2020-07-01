@@ -84,6 +84,7 @@ class SchemaUpdate {
 
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/master/reindex_examples.html
         let index    = this.getNextVersionedIndex()
+        // noinspection JSUnusedLocalSymbols
         let response = await this.client.reindex({
             waitForCompletion: false,  // This causes timeouts on Bonasi
             refresh: true,
@@ -288,6 +289,7 @@ class SchemaUpdate {
                 .default('password', process.env.PASSWORD)
                 .alias('p', 'password')
             .count('verbose')
+                .default('verbose', 1)
                 .alias('v', 'verbose')
             .argv;
 
