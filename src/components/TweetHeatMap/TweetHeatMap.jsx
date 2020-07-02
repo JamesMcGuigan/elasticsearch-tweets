@@ -54,8 +54,14 @@ class TweetHeatMap extends React.Component {
         }
 
         // Don't include keyword in aggregationTerms()
-        ElasticsearchService.aggregationTerms("keyword", _.cloneDeep(query))
-            .then(keywords => { this.setState({ data: { ...this.state.data, keywords: keywords } }) })
+        ElasticsearchService.aggregationBuckets("keyword", _.cloneDeep(query))
+            .then(keywords => {
+                // If search has been updated to exclude the current keyword, then reset the keyword filter
+                if( !_(keywords).map('key').includes(this.state.search.keyword) ) {
+                    this.setState({ search: { ...this.state.search, keyword: '' } })
+                }
+                this.setState({ data: { ...this.state.data, keywords: keywords } })
+            })
         ;
 
         // Extend .search() with keyword terms
@@ -81,7 +87,7 @@ class TweetHeatMap extends React.Component {
     }
     renderSearchBar() {
         return (
-            <form className='searchBar'>
+            <form className='searchBar' onSubmit={event => event.preventDefault()}>
                 <label htmlFor='text'>Search:</label>
                 <input type='text'
                        name='text'
@@ -94,9 +100,11 @@ class TweetHeatMap extends React.Component {
                     value={this.state.search.keyword}
                     onChange={( event ) => this.setState({ search: { ...this.state.search, keyword: event.target.value }})}
                 >
+                    {/* This now sources data from ElasticsearchService.aggregationBuckets() */}
                     <option key='' value=''>All</option>)
-                    { this.state.data.keywords.map(keyword =>
-                        <option key={keyword} value={keyword}>{keyword}</option>)
+                    { this.state.data.keywords
+                        .filter(keyword => keyword.key)  // Remove blank entires
+                        .map(keyword => <option key={keyword.key} value={keyword.key}>{keyword.doc_count} {keyword.key}</option>)
                     }
                 </select>
                 <label htmlFor='disaster'>Disaster:</label>
