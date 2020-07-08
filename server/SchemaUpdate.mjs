@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Requires Node v14 or --experimental-modules cli flag
+// Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://1h7ax5v2fc:df5mt8x6i@kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
+
 import elasticsearch from '@elastic/elasticsearch';
 import Promise from 'bluebird';
 import dotenv from 'dotenv';
@@ -9,27 +12,27 @@ import _ from 'lodash';
 import sjcl from 'sjcl';
 import yargs from 'yargs';
 
-dotenv.config()
+dotenv.config();
 
 // Logic Flow:
 // - Check if index exists
 //   - if not:  upload to @${INDEX}_v1 and alias to ${INDEX}
 //   - if true: check _meta for ${SHA} hash
 //     - if unchanged: exit
-//     - if different: upload to @${INDEX}_v2, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
+//     - if different: upload to @${INDEX}_v2, reindex, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
 
 
 
 class SchemaUpdate {
 
     constructor(argv={}) {
-        this.argv   = { ...this.parseArgv(), ...argv }
+        this.argv   = { ...this.parseArgv(), ...argv };
         this.alias  = this.argv.alias;  // NOTE: this may also be defined as --index or env.INDEX
-        this.schema = json5.parse(jetpack.read(this.argv.schema))
+        this.schema = this.readSchema(this.argv.schema)
     }
     async init() {
-        this.client  = this.getClient(this.argv)
-        await this.client.ping()
+        this.client  = this.getClient(this.argv);
+        await this.client.ping();
         this.indices = await this.getIndices();
         this.aliases = await this.getAliases();
         this.indicesAndAliases = [ ...this.indices, ...this.aliases ]
@@ -44,21 +47,23 @@ class SchemaUpdate {
             if( await this.schemaNeedsUpdating() ) {
                 return await this.uploadSchemaAnReindex();
             } else {
-                return this.doNothing()
+                return await this.doNothing()
             }
         } else {
             return await this.uploadSchemaWithAlias()
         }
     }
-    doNothing() { }
+    async doNothing() {
+        await this.client.ping()
+    }
     async uploadSchemaWithAlias() {
-        await this.uploadSchema()
-        await this.updateAlias()
+        await this.uploadSchema();
+        await this.updateAlias();
     }
     async uploadSchemaAnReindex() {
-        await this.uploadSchema()
-        await this.reindex()
-        await this.updateAlias()
+        await this.uploadSchema();
+        await this.reindex();
+        await this.updateAlias();
         await this.deleteOldIndices()
     }
 
@@ -67,51 +72,53 @@ class SchemaUpdate {
 
     async uploadSchema() {
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-meta-field.html
-        const index = this.getNextVersionedIndex();
-        let schema  = _.cloneDeep(this.schema)
-        _.set(schema, 'mappings._meta.sha256', this.schemaSha256())
+        const index  = this.getNextVersionedIndex();
+        const schema = this.setSha256(this.schema);
 
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#_indices_create
+        // noinspection UnnecessaryLocalVariableJS
         const response = await this.client.indices.create({
             index: index,
             body:  schema,
-        })
+        });
         return response
     }
 
     async reindex() {
-        let startCount = _(await this.client.count({ index: this.alias })).get('body.count')
+        let startCount = _(await this.client.count({ index: this.alias })).get('body.count');
 
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/master/reindex_examples.html
-        let index    = this.getNextVersionedIndex()
+        let index    = this.getNextVersionedIndex();
         // noinspection JSUnusedLocalSymbols
-        let response = await this.client.reindex({
-            waitForCompletion: false,  // This causes timeouts on Bonasi
-            refresh: true,
-            timeout: "24h",  // set higher if required, also requires setting in: Client.requestTimeout
-            scroll:  "24h",
-            // slices:  "auto",
-            body: {
-                source: { index: this.alias, },
-                dest:   { index: index },
+        try {
+            let response = await this.client.reindex({
+                waitForCompletion: true,  // This causes timeouts on Bonasi
+                refresh: true,
+                timeout: "24h",  // set higher if required, also requires setting in: Client.requestTimeout
+                scroll:  "24h",
+                // slices:  "auto",
+                body: {
+                    source: { index: this.alias, },
+                    dest:   { index: index },
+                }
+            });
+        } finally {
+            //// bonsai_exception - Forbidden action
+            // const taskID = _.get(response, 'body.task')
+            // try {
+            //     const taskID = _.get(response, 'body.task')
+            //     const task  = await this.client.tasks.get({task_id: taskID })
+            //     console.log("SchemaUpdate.mjs:94:reindex", "response",response);
+            // } catch(exception) {
+            //     console.error('reindex() exception: ',exception)
+            // }
+
+            // WORKAROUND:
+            // waitForCompletion causes timeouts, and Bonasi doesn't allow access to tasks
+            // poll for the document count and wait for reindex to reach the number from the parent alias
+            while( startCount > _(await this.client.count({ index: index })).get('body.count') ) {
+                await new Promise(r => setTimeout(r, 5*1000));
             }
-        });
-
-        //// bonsai_exception - Forbidden action
-        // const taskID = _.get(response, 'body.task')
-        // try {
-        //     const taskID = _.get(response, 'body.task')
-        //     const task  = await this.client.tasks.get({task_id: taskID })
-        //     console.log("SchemaUpdate.mjs:94:reindex", "response",response);
-        // } catch(exception) {
-        //     console.error('reindex() exception: ',exception)
-        // }
-
-        // WORKAROUND:
-        // waitForCompletion causes timeouts, and Bonasi doesn't allow access to tasks
-        // poll for the document count and wait for reindex to reach the number from the parent alias
-        while( startCount > _(await this.client.count({ index: index })).get('body.count') ) {
-            await new Promise(r => setTimeout(r, 10*1000));
         }
     }
 
@@ -170,7 +177,7 @@ class SchemaUpdate {
     }
 
     getAliasNumber() {
-        const prefix = this.getIndexPrefix()
+        const prefix = this.getIndexPrefix();
         const number = _(this.indicesAndAliases)
             .filter(alias => alias.startsWith(prefix)  )
             .map(alias    => alias.replace(prefix, '') )
@@ -200,20 +207,28 @@ class SchemaUpdate {
         const response = await this.client.indices.getMapping({
             index: this.alias,
             expand_wildcards: 'none'
-        })
-        const indexSha256 = _(_(response.body).values().first()).get('mappings._meta.sha256')
-        const filesystemSha256 = this.schemaSha256()
-        return indexSha256 !== filesystemSha256
+        });
+        const indexSchema      = _(response.body).values().first();  // == response.body.~beauford_house_v6
+        const indexSha256      = this.getSha256(indexSchema);
+        const filesystemSha256 = this.schemaSha256();
+        return indexSha256 !== filesystemSha256;
     }
 
 
     // Lookups
 
+    readSchema(filename) {
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-templates.html
+        let schema = json5.parse(jetpack.read(filename));
+        schema = _.omit(schema, ["index_patterns"]);
+        return _.get(schema, "template") || schema;  // extract schema from template
+    }
+
     getClient() {
         let clientConf = {
-            node: `https://${this.argv.username}:${this.argv.password}@${this.argv.elasticsearch}`,
+            node: this.argv.elasticsearch,
             requestTimeout: 24*60*60,  // BUGFIX: reindex timeout
-        }
+        };
         if( this.argv.username && this.argv.password) {
             clientConf.auth = {
                 username: this.argv.username,
@@ -228,7 +243,7 @@ class SchemaUpdate {
                 } else {
                     console.info(request.meta.request.params.method, request.meta.request.params.path, request.meta.request.params.body || '')
                 }
-            })
+            });
             client.on('response', (error, result) => {
                 if( error ) {
                     console.error(JSON.stringify(error,null,4))
@@ -243,7 +258,7 @@ class SchemaUpdate {
     async getIndices() {
         try {
             const prefix   = this.getIndexPrefix();
-            const response = await this.client.cat.indices({ format: 'json', s: 'index', 'index': '*' })
+            const response = await this.client.cat.indices({ format: 'json', s: 'index', 'index': '*' });
             return response.body
                 .map(row => row.index)
                 .filter(index => !index.startsWith('.'))
@@ -255,7 +270,7 @@ class SchemaUpdate {
     async getAliases() {
         try {
             const prefix   = this.getIndexPrefix();
-            const response = await this.client.cat.aliases({ format: 'json', s: 'alias' })
+            const response = await this.client.cat.aliases({ format: 'json', s: 'alias' });
             return response.body
                 .map(row => row.alias)
                 .filter(alias => !alias.startsWith('.'))
@@ -265,12 +280,26 @@ class SchemaUpdate {
         }
     }
 
+    getSchemaMapping(schema) {
+        // ElasticSearch v6 syntax requires "mappings.doc", but this "doc" is optional in v7+
+        return ( "doc" in schema.mappings ) ? schema.mappings.doc : schema.mappings;
+    }
+    getSha256(schema) {
+        const mapping = this.getSchemaMapping(schema);
+        return _.get(mapping, '_meta.sha256')
+    }
+    setSha256(schema) {
+        schema = _.cloneDeep(schema);
+        const mapping = this.getSchemaMapping(schema);
+        _.set(mapping, '_meta.sha256', this.schemaSha256());
+        return schema
+    }
 
     // Argv
 
     parseArgv() {
         const argv = yargs
-            .usage('Usage: --schema [schema] --alias [str] --elasticsearch [str] --username [str] --password [str]')
+            .usage('Usage: --schema [path] --alias [index] --elasticsearch [url] --username [str] --password [str]')
             .describe('schema', 'path to schema mapping')
                 .default('schema', process.env.SCHEMA)
                 .alias('s', 'schema')
@@ -307,6 +336,6 @@ class SchemaUpdate {
 
 
 (async function() {
-    const schemaUpdate = new SchemaUpdate()
+    const schemaUpdate = new SchemaUpdate();
     await schemaUpdate.run()
-})()
+})();
