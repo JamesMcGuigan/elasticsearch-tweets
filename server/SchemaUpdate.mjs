@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Requires Node v14 or --experimental-modules cli flag
-// Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://1h7ax5v2fc:df5mt8x6i@kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
+// Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
 
 import elasticsearch from '@elastic/elasticsearch';
 import Promise from 'bluebird';
@@ -44,17 +44,18 @@ class SchemaUpdate {
     async run() {
         if( !this.client ) { await this.init(); }
         if( this.aliasExists() || this.aliasIsIndex() ) {
-            if( await this.schemaNeedsUpdating() ) {
-                return await this.uploadSchemaAnReindex();
+            if( this.argv.force || await this.schemaNeedsUpdating() ) {
+                await this.uploadSchemaAnReindex();
             } else {
-                return await this.doNothing()
+                await this.doNothing()
             }
         } else {
-            return await this.uploadSchemaWithAlias()
+            await this.uploadSchemaWithAlias()
         }
+        await this.refresh();
     }
     async doNothing() {
-        await this.client.ping()
+        await this.refresh();
     }
     async uploadSchemaWithAlias() {
         await this.uploadSchema();
@@ -64,11 +65,19 @@ class SchemaUpdate {
         await this.uploadSchema();
         await this.reindex();
         await this.updateAlias();
-        await this.deleteOldIndices()
+        await this.deleteOldIndices();
     }
 
 
     // Actions
+
+    async wait() {
+        await new Promise(r => setTimeout(r, 10*1000));
+    }
+
+    async refresh(index='_all') {
+        await this.client.indices.refresh({ index: index });
+    }
 
     async uploadSchema() {
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-meta-field.html
@@ -77,12 +86,33 @@ class SchemaUpdate {
 
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#_indices_create
         // noinspection UnnecessaryLocalVariableJS
-        const response = await this.client.indices.create({
-            index: index,
-            body:  schema,
-        });
-        return response
+        try {
+            const response = await this.client.indices.create({
+                index: index,
+                body:  schema,
+                timeout: "1d",
+                master_timeout: "1d",
+            });
+        } catch(error) {
+            if( _.get(error, 'name') === 'TimeoutError' ) {
+                await this.waitForIndex(index);
+            } else {
+                return null;
+            }
+        }
+        return schema;
     }
+    async waitForIndex(index) {
+        while( true ) {
+            let exists = await this.client.indices.exists({ index: index, ignore_unavailable: true });
+            if( exists ) {
+                return true;
+            } else {
+                await new Promise(r => setTimeout(r, 10*1000));
+            }
+        }
+    }
+
 
     async reindex() {
         let startCount = _(await this.client.count({ index: this.alias })).get('body.count');
@@ -92,39 +122,41 @@ class SchemaUpdate {
         // noinspection JSUnusedLocalSymbols
         try {
             let response = await this.client.reindex({
-                waitForCompletion: true,  // This causes timeouts on Bonasi
+                waitForCompletion: false,  // This causes timeouts on Bonasi
                 refresh: true,
-                timeout: "24h",  // set higher if required, also requires setting in: Client.requestTimeout
-                scroll:  "24h",
-                // slices:  "auto",
+                timeout: "1d",  // set higher if required, also requires setting in: Client.requestTimeout
+                // scroll:  "1d",
+                slices:  "auto",
                 body: {
                     source: { index: this.alias, },
                     dest:   { index: index },
                 }
             });
-        } finally {
+
             //// bonsai_exception - Forbidden action
-            // const taskID = _.get(response, 'body.task')
-            // try {
-            //     const taskID = _.get(response, 'body.task')
-            //     const task  = await this.client.tasks.get({task_id: taskID })
-            //     console.log("SchemaUpdate.mjs:94:reindex", "response",response);
-            // } catch(exception) {
-            //     console.error('reindex() exception: ',exception)
-            // }
+            const taskID = _.get(response, 'body.task');
+            while( true ) {
+                let task      = await this.client.tasks.get({ task_id: taskID });
+                let completed = _.get(task, 'body.completed');  // boolean
+                if( completed ) { break; }
+                await this.wait();
+            }
+
+        } catch(exception) {
 
             // WORKAROUND:
             // waitForCompletion causes timeouts, and Bonasi doesn't allow access to tasks
             // poll for the document count and wait for reindex to reach the number from the parent alias
             while( startCount > _(await this.client.count({ index: index })).get('body.count') ) {
-                await new Promise(r => setTimeout(r, 5*1000));
+                await this.wait();
+                await this.refresh(index);  // BUGFIX: _refresh to update doc counts
             }
         }
     }
 
     async deleteOldIndices() {
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#_indices_deletealias
-        Promise.map( _.without(this.aliases, this.alias), (alias) => {
+        await Promise.map( _.without(this.aliases, this.alias), (alias) => {
             // aliases will probably be empty
             // noinspection JSCheckFunctionSignatures
             this.client.indices.deleteAlias({
@@ -132,10 +164,12 @@ class SchemaUpdate {
             })
         });
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#_indices_delete
-        return this.client.indices.delete({
-            index: this.indices,
-            ignore_unavailable: true,
-            expand_wildcards: 'none'
+        await Promise.map( this.indices, (index) => {
+            return this.client.indices.delete({
+                index: index,
+                ignore_unavailable: true,
+                expand_wildcards: 'none'
+            });
         });
     }
 
@@ -173,7 +207,7 @@ class SchemaUpdate {
 
     getIndexPrefix() {
         // BUGFIX: "Invalid index name [_twitter_v1], must not start with '_', '-', or '+'",
-        return`~${this.alias}_v`
+        return`${this.alias}_v`
     }
 
     getAliasNumber() {
@@ -211,6 +245,9 @@ class SchemaUpdate {
         const indexSchema      = _(response.body).values().first();  // == response.body.~beauford_house_v6
         const indexSha256      = this.getSha256(indexSchema);
         const filesystemSha256 = this.schemaSha256();
+        console.info(`elasticsearch sha256 = ${indexSha256}`);
+        console.info(`filesystem    sha256 = ${filesystemSha256}`);
+        console.info(`sha256 hashes are equal = ${indexSha256 === filesystemSha256}`);
         return indexSha256 !== filesystemSha256;
     }
 
@@ -228,6 +265,7 @@ class SchemaUpdate {
         let clientConf = {
             node: this.argv.elasticsearch,
             requestTimeout: 24*60*60,  // BUGFIX: reindex timeout
+            masterTimeout:  24*60*60,  // BUGFIX: reindex timeout - UNTESTED
         };
         if( this.argv.username && this.argv.password) {
             clientConf.auth = {
@@ -282,16 +320,19 @@ class SchemaUpdate {
 
     getSchemaMapping(schema) {
         // ElasticSearch v6 syntax requires "mappings.doc", but this "doc" is optional in v7+
-        return ( "doc" in schema.mappings ) ? schema.mappings.doc : schema.mappings;
+        if(       "doc" in schema.mappings ) { return _.get(schema, 'mappings.doc');  }
+        else if( "_doc" in schema.mappings ) { return _.get(schema, 'mappings._doc'); }
+        else                                 { return _.get(schema, 'mappings');      }
     }
     getSha256(schema) {
-        const mapping = this.getSchemaMapping(schema);
+        const mapping = this.getSchemaMapping(schema);  // BUGFIX: _meta getting injected in the wrong place in ES7
         return _.get(mapping, '_meta.sha256')
     }
     setSha256(schema) {
         schema = _.cloneDeep(schema);
-        const mapping = this.getSchemaMapping(schema);
-        _.set(mapping, '_meta.sha256', this.schemaSha256());
+        if(       "doc" in schema.mappings ) { _.set(schema, 'mappings.doc._meta.sha256',  this.schemaSha256()); }
+        else if( "_doc" in schema.mappings ) { _.set(schema, 'mappings._doc._meta.sha256', this.schemaSha256()); }
+        else                                 { _.set(schema, 'mappings._meta.sha256',      this.schemaSha256()); }
         return schema
     }
 
@@ -317,6 +358,12 @@ class SchemaUpdate {
             .describe('password', 'elasticsearch password')
                 .default('password', process.env.PASSWORD)
                 .alias('p', 'password')
+            .option('force', {
+                alias: 'f',
+                type: 'boolean',
+                description: 'force reindex even without schema changes',
+                default: false
+            })
             .count('verbose')
                 .default('verbose', 1)
                 .alias('v', 'verbose')
