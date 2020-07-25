@@ -1,7 +1,20 @@
 # Kaggle Tweets with ElasticSearch
 - Visualization: https://tweets.elasticsearch.jamesmcguigan.com
 
-# ElasticSearch with Bonsai
+## ElasticSearch Writeups
+- [ElasticSearch Features](ELASTICSEARCH_FEATURES.md)
+- [ElasticSearch Queries](ELASTICSEARCH_QUERIES.md)
+
+## Javascript Code Examples
+- [server/client.mjs](server/client.mjs) - Create ElasticSearch Javascript Client  
+- [server/actions/bulkUpdate.mjs](server/actions/bulkUpdate.mjs) - Bulk Update
+- [server/actions/scanAndScroll.mjs](server/actions/scanAndScroll.mjs) - Scan And Scroll 
+- [server/actions/geocode.mjs](server/actions/geocode.mjs) - Google Geocode API 
+- [server/SchemaUpdate.mjs](server/SchemaUpdate.mjs) - Schema Update Script
+- [src/services/ElasticsearchService.js](src/services/ElasticsearchService.js) - Wrapper Functions for Common Queries 
+- [src/components/TweetHeatMap/TweetHeatMap.jsx](src/components/TweetHeatMap/TweetHeatMap.jsx) - ElasticSearch Queries in React  
+
+## ElasticSearch Hosting with Bonsai
 - Host: https://bonsai.io/
 - ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-7601590568
 - Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana
@@ -14,25 +27,28 @@ cp ./.env.template       ./.env
 cp ./.env.local.template ./.env.local 
 vim ./.env ./.env.local
 ```
-
-## ElasticSearch Status
-So that you know ElasticSearch is up 
-```    
-source ./.env
-curl -X GET "$ELASTICSEARCH_URL"
-```
-```
-{
-  "name" : "ip-172-31-46-132",
-  "cluster_name" : "elasticsearch",
-  "cluster_uuid" : "9-66PY3iSj-gXGcLGUFe4A",
-  "version" : { "number" : "7.2.0", "build_flavor" : "oss", "build_type" : "tar", "build_hash" : "508c38a", "build_date" : "2019-06-20T15:54:18.811730Z", "build_snapshot" : false, "lucene_version" : "8.0.0", "minimum_wire_compatibility_version" : "6.8.0", "minimum_index_compatibility_version" : "6.0.0-beta1" },
-  "tagline" : "You Know, for Search"
-}
+cat .env
 ``` 
+USERNAME=
+PASSWORD=
+ELASTICSEARCH=kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443
+INDEX=twitter
+ELASTICSEARCH_URL=https://$USERNAME:$PASSWORD@$ELASTICSEARCH
+SCHEMA=server/schema.json5
+GEOCODE_API_KEY=
+MAPS_API_KEY=
+```
+cat .env.local
+```
+NEXT_PUBLIC_USERNAME=
+NEXT_PUBLIC_PASSWORD=
+NEXT_PUBLIC_ELASTICSEARCH=kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443
+NEXT_PUBLIC_ELASTICSEARCH_URL=https://${NEXT_PUBLIC_USERNAME}:${NEXT_PUBLIC_PASSWORD}@kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443
+NEXT_PUBLIC_INDEX=twitter
+NEXT_PUBLIC_MAPS_API_KEY=
+```
 
 ## Create Index and Reingest
-TODO: create index aliases and reindex with new mapping
 ```
 bash ./server/schema.sh     
 node ./server/ingest.mjs
@@ -57,123 +73,18 @@ geocode: updated 104 documents in 105ms for kaggle-tweets-7601590568.eu-west-1.b
 ```
 
 
-## Search Query
-```   
-curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
--d '{ "size": 1, "query": { "match": { "target": 1 } } }' | json_pp 
+## Update Schema and Reindex
+With .env file
 ```
-```
-curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
-> -d '{ "size": 1, "query": { "match": { "target": 1 } } }' | json_pp 
-{
-   "_shards" : {
-      "failed" : 0,
-      "skipped" : 0,
-      "successful" : 1,
-      "total" : 1
-   },
-   "hits" : {
-      "hits" : [
-         {
-            "_id" : "1",
-            "_index" : "twitter",
-            "_score" : 1,
-            "_source" : {
-               "id" : "1",
-               "keyword" : "",
-               "location" : "",
-               "target" : "1",
-               "text" : "Our Deeds are the Reason of this #earthquake May ALLAH Forgive us all"
-            },
-            "_type" : "_doc"
-         }
-      ],
-      "max_score" : 1,
-      "total" : {
-         "relation" : "eq",
-         "value" : 3271
-      }
-   },
-   "timed_out" : false,
-   "took" : 1
-}
-```
+node --experimental-modules ./server/SchemaUpdate.mjs
+```           
 
-## Aggregation Query
+Without .env file (or to override)
 ```
-curl -s -H "Content-Type: application/json" -X GET $ELASTICSEARCH_URL/twitter/_search \
--d '{ "size": 0, "aggs": { "location": { "terms": { "size": 20, "field": "location" } } } }' | 
-json_pp | grep "key" | awk '{ print $3 }' | tr '\n' ' '
-```
-```
-"usa" "new" "the" "ca" "york" "london" "united" "canada" "in" "of" "uk" "city" "california" "ny" "san" "england" "washington" "australia" "los" "states" 
-```
-
-
-## Geolocation API
-- https://developers.google.com/maps/documentation/geocoding/start
-```
-LOCATION="North Druid Hills, GA"
-curl -G "https://maps.googleapis.com/maps/api/geocode/json?key=$GOOGLE_API_KEY" --data-urlencode "address=$LOCATION"  
-```                                                                                                                   
-```
-{
-   "results" : [
-      {
-         "address_components" : [
-            {
-               "long_name" : "North Druid Hills",
-               "short_name" : "North Druid Hills",
-               "types" : [ "locality", "political" ]
-            },
-            {
-               "long_name" : "DeKalb County",
-               "short_name" : "Dekalb County",
-               "types" : [ "administrative_area_level_2", "political" ]
-            },
-            {
-               "long_name" : "Georgia",
-               "short_name" : "GA",
-               "types" : [ "administrative_area_level_1", "political" ]
-            },
-            {
-               "long_name" : "United States",
-               "short_name" : "US",
-               "types" : [ "country", "political" ]
-            }
-         ],
-         "formatted_address" : "North Druid Hills, GA, USA",
-         "geometry" : {
-            "bounds" : {
-               "northeast" : {
-                  "lat" : 33.840573,
-                  "lng" : -84.30390589999999
-               },
-               "southwest" : {
-                  "lat" : 33.7997699,
-                  "lng" : -84.3485249
-               }
-            },
-            "location" : {
-               "lat" : 33.816771,
-               "lng" : -84.3132574
-            },
-            "location_type" : "APPROXIMATE",
-            "viewport" : {
-               "northeast" : {
-                  "lat" : 33.840573,
-                  "lng" : -84.30390589999999
-               },
-               "southwest" : {
-                  "lat" : 33.7997699,
-                  "lng" : -84.3485249
-               }
-            }
-         },
-         "place_id" : "ChIJlXu9ykAG9YgRiAFOs6TzMoA",
-         "types" : [ "locality", "political" ]
-      }
-   ],
-   "status" : "OK"
-}
+node --experimental-modules ./server/SchemaUpdate.mjs \
+--schema ./server/schema.json5 \
+--alias twitter \
+--elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 \
+--username username \
+--password password
 ```

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Requires Node v14 or --experimental-modules cli flag
+// Usage: node --experimental-modules ./server/SchemaUpdate.mjs  # with .env file
 // Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
 
 import elasticsearch from '@elastic/elasticsearch';
