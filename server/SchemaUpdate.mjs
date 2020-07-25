@@ -262,8 +262,10 @@ class SchemaUpdate {
     }
 
     getClient() {
+        // BUGFIX: allow 'https://' prefix to be optional for CLI or .env args
+        let url = this.argv.elasticsearch.match(/^\w+:\/\//) ? elasticsearch : `https://${this.argv.elasticsearch}`;
         let clientConf = {
-            node: this.argv.elasticsearch,
+            node: url,
             requestTimeout: 24*60*60,  // BUGFIX: reindex timeout
             masterTimeout:  24*60*60,  // BUGFIX: reindex timeout - UNTESTED
         };
