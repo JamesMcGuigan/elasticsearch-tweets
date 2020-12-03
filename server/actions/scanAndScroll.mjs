@@ -8,7 +8,7 @@ export async function scanAndScroll(params, callback) {
             index:  process.env.INDEX,
             // type:   "esIndexType",
             scroll: "2m",  // Specify how long a consistent view of the index should be maintained for scrolled search
-            size:   1000,  // Number of hits to return (default: 10)
+            size:   100,   // Number of hits to return (default: 10)
             ...params,
         });
 

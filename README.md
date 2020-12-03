@@ -16,8 +16,8 @@
 
 ## ElasticSearch Hosting with Bonsai
 - Host: https://bonsai.io/
-- ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-7601590568
-- Kibana: https://kaggle-tweets-7601590568.k4a.bonsaisearch.net/app/kibana
+- ElasticSearch: https://app.bonsai.io/clusters/kaggle-tweets-3926018095
+- Kibana: https://kaggle-tweets-3926018095.k4a.bonsaisearch.net/app/kibana
 - Dataset: https://www.kaggle.com/c/nlp-getting-started/ 
 
 ## .env
@@ -51,8 +51,8 @@ NEXT_PUBLIC_MAPS_API_KEY=
 ## Create Index and Reingest
 ```
 bash ./server/schema.sh     
-node ./server/ingest.mjs
-node ./server/geocode.mjs 
+node --experimental-modules ./server/ingest.mjs
+node --experimental-modules ./server/geocode.mjs 
 ```  
 ``` 
 {"acknowledged":true}
