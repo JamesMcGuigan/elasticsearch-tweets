@@ -6,11 +6,10 @@
 //                  12262 rows * $0.005 = $61.30 | within $200/month Google API allowance
 
 import Promise from 'bluebird';
-import { sleep } from './actions/sleep.mjs';
-import client from "./client.mjs";
-import { bulkUpdate } from "./actions/bulkUpdate.mjs";
-import { geocode } from "./actions/geocode.mjs";
-import { scanAndScroll, scanAndScrollField } from "./actions/scanAndScroll.mjs";
+import {sleep} from './actions/sleep.mjs';
+import {bulkUpdate} from "./actions/bulkUpdate.mjs";
+import {geocode} from "./actions/geocode.mjs";
+import {scanAndScroll, scanAndScrollField} from "./actions/scanAndScroll.mjs";
 
 async function geocodeByLocation() {
     return await scanAndScrollField("location", async ( locations ) => {
@@ -26,6 +25,7 @@ async function geocodeByLocation() {
 }
 async function geocodeByText() {
     return await scanAndScroll({
+        size: 1000,
         body: {
             query: {
                 "bool": {
@@ -45,29 +45,10 @@ async function geocodeByText() {
     })
 }
 
-// Bonsai Has a 10,000 document limit, so trim all extraneous entries
-async function deleteNonGeocode() {
-    return client.deleteByQuery({
-        index: process.env.INDEX,
-        body: {
-            query: {
-                "bool": {
-                    "must_not": [{ "exists": { "field": "geocode" } }],
-                }
-            }
-        }
-    })
-    .catch(error => {
-        console.error('deleteNonGeocode', error)
-    })
-}
-
 async function main() {
     await geocodeByLocation()
     await sleep(1000)
     await geocodeByText()
-    await sleep(1000)
-    await deleteNonGeocode()
 }
 main();
 

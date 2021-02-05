@@ -53,6 +53,7 @@ NEXT_PUBLIC_MAPS_API_KEY=
 bash ./server/schema.sh     
 node --experimental-modules ./server/ingest.mjs
 node --experimental-modules ./server/geocode.mjs 
+node --experimental-modules ./server/deleteOverage.mjs 
 ```  
 ``` 
 {"acknowledged":true}
