@@ -28,7 +28,8 @@ async function deleteOverage(limit=10_000) {
                             { "regexp": { "text": "[^\\s]"   } }
                         ],
                         "must_not": [
-                            { "exists": { "field": "geocode" } }
+                            { "exists": { "field": "target"  } },
+                            { "exists": { "field": "geocode" } },
                         ],
                     }
                 }
