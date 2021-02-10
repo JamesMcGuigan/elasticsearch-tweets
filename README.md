@@ -50,6 +50,7 @@ NEXT_PUBLIC_MAPS_API_KEY=
 
 ## Create Index and Reingest
 ```
+nvm use --lts
 bash ./server/schema.sh     
 node --experimental-modules ./server/ingest.mjs
 node --experimental-modules ./server/geocode.mjs 
