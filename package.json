@@ -13,7 +13,7 @@
     "@react-google-maps/api": "^1.9.6",
     "@zeit/next-less": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bluebird": "^3.7.2",
     "chardet": "^1.1.0",
     "dotenv-override-true": "^6.2.2",
