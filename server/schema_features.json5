@@ -1,0 +1,436 @@
+// schema_features.json5 | example schema showing advanced analyzer configuration
+{
+  "settings":{
+    "analysis": {
+      // Test analysers in Kibana - https://kaggle-tweets-3926018095.k4a.bonsaisearch.net/app/kibana#/dev_tools/console
+      // GET /_analyze              { "tokenizer": "standard", "filter": ["stemmer"], "text": "running" }
+      // GET /twitter/_analyze      { "text": "M.A.C d'lecetessen" }
+
+
+      // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html
+      "analyzer": {
+
+        "default": {
+          // COPY/PASTE: english_stemming
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "uax_url_email",  // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-uaxurlemail-tokenizer.html
+          "filter": [
+            "classic",                   // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+            "hunspell_stemming_replace", // Shortcut for Hunspell Stemming
+            "shingle_phrases",           // apply shingles after stemming
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        },
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/specify-analyzer.html#specify-index-time-default-analyzer
+        "english_stemming": {
+          // NOTE: This is the default analyser. Changes here should be copy/pasted into default
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "uax_url_email",  // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-uaxurlemail-tokenizer.html
+          "filter": [
+            "classic",                   // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+            "hunspell_stemming_replace", // Shortcut for Hunspell Stemming
+            "shingle_phrases",           // apply shingles after stemming
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        },
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/master/mixing-exact-search-with-stemming.html
+        "english_unstemmed": {
+          // Like english_stemming but without stemming
+          "char_filter": [
+            "html_strip"                // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "uax_url_email", // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-uaxurlemail-tokenizer.html
+          "filter": [
+            "classic",                  // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+            "shingle_phrases",           // apply shingles after stemming
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        },
+
+        "english_synonyms": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "uax_url_email",
+          "filter": [
+            "classic",                  // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+            // TODO: Test the effect of applying stemmer + stop words to wordnet on popup_body content
+            // Using Hunspell here causes illegal_argument_exception on some some inputs
+            // Snowball stemmer as an algorithicmic stemmer may be less likely to output mangled words
+            // Example "quickly" -> "quick" (snowball) vs "quickli" (porter_stem)
+            // "snowball",                  // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-snowball-tokenfilter.html
+            "wordnet_synonyms",
+            "strip_two_letter_synonyms", // remove all one or two letter unigram synonyms: ie: 'e' or 'th'
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        },
+
+        "phonetic": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "standard",
+          "filter": [
+            "classic",                  // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+            "hunspell_stemming_replace", // Shortcut for Hunspell Stemming
+            "phonetic_replace",
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        },
+
+        "singleword": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "standard",
+          "filter": [
+            "classic",                  // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",             // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",          // defined below | apply after: asciifolding
+            "shingle_singleword"
+          ]
+        },
+
+        // This adds tokens for: exact, stemming and phonetics; in a single bucket suitable for cross_fields queries
+        // Doesn't seem to produce good results
+        // @UNUSED
+        "cross_fields_single_bucket": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"                 // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+          ],
+          "tokenizer": "uax_url_email",
+          "filter": [
+            // ASCII Preprocessing
+            "classic",                   // remove 's and . in acronyms | DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-classic-tokenfilter.html
+            "lowercase",
+            "asciifolding",              // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.6/analysis-asciifolding-tokenfilter.html
+            "strip_non_ascii",           // defined below | apply after: asciifolding
+
+            // Text Analysis
+            "exact_stemming_phonetic_multiplexer",
+            "shingle_phrases",
+            "unique",                    // don't allow duplicate keywords to boost score
+          ]
+        }
+      },
+
+
+      "char_filter": {
+      },
+
+
+      "filter": {
+        // Multiplexers
+
+        // @Unused
+        exact_stemming_phonetic_multiplexer: {
+          "type" : "multiplexer",
+          "filters" : [
+            "snowball, phonetic_refinedsoundex_replace",
+            "hunspell_stemming_replace",
+          ],
+          preserve_original: true
+        },
+
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-multiplexer-tokenfilter.html
+        // @UNUSED
+        "extact_stemming_wordnet_multiplexer": {
+          "type": "multiplexer",
+          "filters": [
+            "minimal_english_stemmer, uk_us_spelling_list, hunspell_stemmer_en_US",
+            "minimal_english_stemmer, wordnet_synonyms",
+          ],
+          preserve_original: true
+        },
+
+        //// Char Filters
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-pattern-replace-charfilter.html
+        // NOTE: apply after asciifolding
+        "strip_non_ascii": {
+          // Apply after: asciifolding
+          // Examples: Ca'puccino -> Capuccino | M·A·C -> MAC | d'lecetessen -> dlecetessen
+          "type": "pattern_replace",
+          "pattern": "[^a-zA-Z0-9_\\s-]",  // remove all non word and non-space chars, but let '-' be tokenized
+          "replacement": ""
+        },
+        "strip_two_letter_synonyms": {
+          "type": "pattern_replace",
+          "pattern": "^\\w{1,2}$",  // remove all one or two letter synonyms: ie: 'e' or 'th'
+          "replacement": ""
+        },
+
+        //// Shingle Phrase Queries
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-shingle-tokenfilter.html
+        "shingle_phrases": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 3,
+          "output_unigrams":  true
+        },
+        // Example: "All Bar One" -> [ "allbar", "barone", "allbarone" ]
+        // NOTE: shingles don't work well with multiplexers, needs to be in a separate analyzer
+        "shingle_singleword": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 3,
+          "output_unigrams":  false,
+          "token_separator":  ""
+        },
+
+
+        //// Phonetic
+
+        // DOCS: https://www.linkedin.com/pulse/elasticsearch-phonetic-algorithms-daniel-ranallo/
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/plugins/current/analysis-phonetic-token-filter.html
+        "phonetic_inject": {
+          "type" : "multiplexer",
+          "filters" : [
+            // Run phonetics on both stemmed and unstemmed inputs for both query and index
+            "snowball, phonetic_refinedsoundex_inject",
+            "phonetic_refinedsoundex_inject",
+          ]
+        },
+        "phonetic_replace": {
+          "type" : "multiplexer",
+          "filters" : [
+            // Run phonetics on both stemmed and unstemmed inputs for both query and index
+            "snowball, phonetic_refinedsoundex_replace",
+            "phonetic_refinedsoundex_replace",
+          ]
+        },
+        "phonetic_refinedsoundex_inject": {
+          "type":    "phonetic",
+          "encoder": "refinedsoundex",
+          "replace": true
+        },
+        "phonetic_refinedsoundex_replace": {
+          "type":    "phonetic",
+          "encoder": "refinedsoundex",
+          "replace": false
+        },
+
+        //// Synonyms
+
+        // Source: http://www.tysto.com/uk-us-spelling-list.html
+        // This converts UK english spelling into US spelling
+        "uk_us_spelling_list": {
+          "type": "synonym_graph",
+          "synonyms_path" : "analysis/uk_us_spelling_list.txt"
+        },
+
+        // Source: https://stackoverflow.com/questions/24257747/normalize-british-and-american-english-for-elasticsearch
+        // These are synonyms to translate British English into Americanisms
+        // @UNUSED
+        "synonyms_americanisms": {
+          "type": "synonym_graph",
+          "synonyms_path" : "analysis/synonyms_americanisms.txt"
+        },
+
+        // DOCS: https://docs.bonsai.io/article/113-using-wordnet-with-bonsai
+        // DOCS: https://wordnet.princeton.edu/
+        // DATA: elastic-search-backend/deployment/elasticsearch/wordnet/wn_s.pl
+        "wordnet_synonyms": {
+          "type": "synonym_graph",
+          "format": "wordnet",
+          "lenient": false,  // BUGFIX: applying hunspell stemmer or stopwords before wordnet throws illegal_argument_exception for some inputs
+          "synonyms_path": "wordnet/wn_s.pl"
+        },
+
+
+        //// Stemmers
+
+        // Shortcut for Hunspell Stemming
+        "hunspell_stemming_inject": {
+          "type": "multiplexer",
+          "filters": [ "uk_us_spelling_list, hunspell_stemmer_en_US" ],
+          preserve_original: true
+        },
+        "hunspell_stemming_replace": {
+          "type":    "multiplexer",
+          "filters": [ "uk_us_spelling_list, hunspell_stemmer_en_US", ]
+        },
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-hunspell-tokenfilter.html
+        // Adding new languages:
+        // - Download from: http://download.services.openoffice.org/contrib/dictionaries/
+        // - Extract zips | copy to ./deployment/elasticsearch/hunspell/{lang}/{lang}.aff + {lang}.dic
+        "hunspell_stemmer_en_GB": {
+          "type":   "hunspell",
+          "locale": "en_GB",
+          "dedup":  true,
+          // elasticsearch.yml | indices.analysis.hunspell.dictionary.ignore_case: true
+        },
+        "hunspell_stemmer_en_US": {
+          "type":   "hunspell",
+          "locale": "en_US",
+          "dedup":  true,
+          // elasticsearch.yml | indices.analysis.hunspell.dictionary.ignore_case: true
+        }
+      }
+    }
+  },
+  "mappings": {
+    // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic.html
+    "dynamic": 'strict',  // Refuse to insert/update data if any input fields are missing from the schema
+    // "dynamic": true,      // TODO: set dynamic: "strict"
+    "properties": {
+      "@timestamp":      { "type": "date"      },
+      "@version":        { "type": "keyword"   },
+      "category":        { "type": "keyword"   },
+      "centroid":        { "type": "geo_point" },
+      "class":           { "type": "keyword"   },
+      "floor_id":        { "type": "integer"   },
+      "floor_level":     { "type": "float"     },
+      "floor_name":      { "type": "keyword"   },
+      "geom":            { "type": "geo_shape" },
+      "geom_id":         { "type": "integer"   },
+      "indoor":          { "type": "boolean"   },
+      "is_geojson":      { "type": "boolean"   },
+      "lm_id":           { "type": "keyword"   },
+      "opening_times":   { "type": "text",     "fielddata": true },
+      "pin_type":        { "type": "keyword"   },
+      "polygon_link_id": { "type": "integer"   },
+      "location_name":   { "type": "text",     "fielddata": true },
+      "popup_image_url": { "type": "keyword"   },
+      "room_number":     { "type": "keyword"   },
+      "sextant":         { "type": "keyword"   },
+      "sub_category_id": { "type": "integer"   },
+      "tel_number":      { "type": "keyword"   },
+      "transport_api":   { "type": "keyword"   },
+      "type":            { "type": "keyword"   },
+      "url":             { "type": "keyword"   },
+
+      // TODO: consider using a CSV tokenizer on commas here instead or removing shingles
+      "keywords": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "metatags": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "name": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "popup_body": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input,  // singleword doesn't output original unigrams 
+        }
+      },
+      "popup_header": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "popup_subheader": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "primary_category": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "street_address": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      },
+      "sub_category": {
+        "type": "text",
+        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
+        "fields": {
+          "keyword":    { "type": "keyword", "ignore_above": 256        },
+          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
+          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
+          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
+          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
+        }
+      }
+    }
+  }
+}
