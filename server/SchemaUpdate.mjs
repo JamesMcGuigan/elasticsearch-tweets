@@ -5,7 +5,7 @@
 
 import elasticsearch from '@elastic/elasticsearch';
 import Promise from 'bluebird';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv-override-true';  // BUGFIX: process.env.USERNAME
 import jetpack from 'fs-jetpack';
 import jsonKeysSort from 'json-keys-sort';
 import json5 from 'json5';
@@ -264,7 +264,7 @@ class SchemaUpdate {
 
     getClient() {
         // BUGFIX: allow 'https://' prefix to be optional for CLI or .env args
-        let url = this.argv.elasticsearch.match(/^\w+:\/\//) ? elasticsearch : `https://${this.argv.elasticsearch}`;
+        let url = this.argv.elasticsearch.match(/^\w+:\/\//) ? this.argv.elasticsearch : `https://${this.argv.elasticsearch}`;
         let clientConf = {
             node: url,
             requestTimeout: 24*60*60,  // BUGFIX: reindex timeout
