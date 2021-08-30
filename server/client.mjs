@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import elasticsearch from '@elastic/elasticsearch'
-import dotenv from 'dotenv'
+import dotenv from 'dotenv-override-true'
 
 dotenv.config()
 

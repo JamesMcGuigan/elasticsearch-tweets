@@ -1,5 +1,5 @@
 import axios from "axios";
-import dotenv from "dotenv";
+import dotenv from "dotenv-override-true";
 import jetpack from "fs-jetpack";
 import _ from "lodash";
 

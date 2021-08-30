@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Requires Node v14 or --experimental-modules cli flag
-import dotenv from 'dotenv';
+import dotenv from 'dotenv-override-true';
 import fs from 'fs';
 import _ from 'lodash';
 import neatCsv from "neat-csv";
