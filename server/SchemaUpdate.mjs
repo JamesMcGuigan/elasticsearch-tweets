@@ -3,7 +3,7 @@
 // Usage: node --experimental-modules ./server/SchemaUpdate.mjs  # with .env file
 // Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
 
-import elasticsearch from '@elastic/elasticsearch';
+import elasticsearch from '@elastic/elasticsearch';  // v7.10 is last version to work with AWS/Bonsai servers before ProductNotSupportedError
 import Promise from 'bluebird';
 import dotenv from 'dotenv-override-true';  // BUGFIX: process.env.USERNAME
 import jetpack from 'fs-jetpack';
