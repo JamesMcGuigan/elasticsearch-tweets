@@ -4,6 +4,7 @@
 ## ElasticSearch Writeups
 - [ElasticSearch Features](ELASTICSEARCH_FEATURES.md)
 - [ElasticSearch Queries](ELASTICSEARCH_QUERIES.md)
+- [ElasticSearch Upgrade Process](ELASTICSEARCH_UPGRADE.md)
 
 ## ElasticSearch Schemas
 - [server/schema.json5](server/schema.json5) - Simple schema used by Web Visualization 
