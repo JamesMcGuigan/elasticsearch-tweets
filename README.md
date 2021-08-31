@@ -5,6 +5,10 @@
 - [ElasticSearch Features](ELASTICSEARCH_FEATURES.md)
 - [ElasticSearch Queries](ELASTICSEARCH_QUERIES.md)
 
+## ElasticSearch Schemas
+- [server/schema.json5](server/schema.json5) - Simple schema used by Web Visualization 
+- [server/schema_features.json5](server/schema_features.json5) - Example schema showing advanced analyser configuration
+
 ## Javascript Code Examples
 - [server/client.mjs](server/client.mjs) - Create ElasticSearch Javascript Client  
 - [server/actions/bulkUpdate.mjs](server/actions/bulkUpdate.mjs) - Bulk Update
