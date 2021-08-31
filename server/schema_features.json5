@@ -306,121 +306,15 @@
     // "dynamic": true,      // TODO: set dynamic: "strict"
     "properties": {
       "@timestamp":      { "type": "date"      },
-      "@version":        { "type": "keyword"   },
-      "category":        { "type": "keyword"   },
-      "centroid":        { "type": "geo_point" },
-      "class":           { "type": "keyword"   },
-      "floor_id":        { "type": "integer"   },
-      "floor_level":     { "type": "float"     },
-      "floor_name":      { "type": "keyword"   },
-      "geom":            { "type": "geo_shape" },
-      "geom_id":         { "type": "integer"   },
-      "indoor":          { "type": "boolean"   },
-      "is_geojson":      { "type": "boolean"   },
-      "lm_id":           { "type": "keyword"   },
-      "opening_times":   { "type": "text",     "fielddata": true },
-      "pin_type":        { "type": "keyword"   },
-      "polygon_link_id": { "type": "integer"   },
-      "location_name":   { "type": "text",     "fielddata": true },
-      "popup_image_url": { "type": "keyword"   },
-      "room_number":     { "type": "keyword"   },
-      "sextant":         { "type": "keyword"   },
-      "sub_category_id": { "type": "integer"   },
-      "tel_number":      { "type": "keyword"   },
-      "transport_api":   { "type": "keyword"   },
-      "type":            { "type": "keyword"   },
+      "@version":        { "type": "integer"   },
+      "@score":          { "type": "float"     },
       "url":             { "type": "keyword"   },
+      "enabled":         { "type": "boolean"   },
+      "coords":          { "type": "geo_point" },
+      "description":     { "type": "text",     "fielddata": true },
 
       // TODO: consider using a CSV tokenizer on commas here instead or removing shingles
       "keywords": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "metatags": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "name": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "popup_body": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input,  // singleword doesn't output original unigrams 
-        }
-      },
-      "popup_header": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "popup_subheader": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "primary_category": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "street_address": {
-        "type": "text",
-        "fielddata": true,  // required to enable aggregation queries - disable if unrequired
-        "fields": {
-          "keyword":    { "type": "keyword", "ignore_above": 256        },
-          "exact":      { "type": "text", "analyzer": "english_unstemmed"   },
-          "synonyms":   { "type": "text", "analyzer": "english_synonyms", "search_analyzer": "default" },  // Prevent double lookup of synonyms of synonyms
-          "phonetic":   { "type": "text", "analyzer": "phonetic"        },
-          "singleword": { "type": "text", "analyzer": "singleword",       "search_analyzer": "english_unstemmed" },  // singleword doesn't output original unigrams - but don't apply stemming to input
-        }
-      },
-      "sub_category": {
         "type": "text",
         "fielddata": true,  // required to enable aggregation queries - disable if unrequired
         "fields": {
