@@ -5,6 +5,7 @@
 - [ElasticSearch Features](ELASTICSEARCH_FEATURES.md)
 - [ElasticSearch Queries](ELASTICSEARCH_QUERIES.md)
 - [ElasticSearch Upgrade Process](ELASTICSEARCH_UPGRADE.md)
+- [Google API](GOOGLE_API.md)
 
 ## ElasticSearch Schemas
 - [server/schema.json5](server/schema.json5) - Simple schema used by Web Visualization 
@@ -14,7 +15,7 @@
 - [server/client.mjs](server/client.mjs) - Create ElasticSearch Javascript Client  
 - [server/actions/bulkUpdate.mjs](server/actions/bulkUpdate.mjs) - Bulk Update
 - [server/actions/scanAndScroll.mjs](server/actions/scanAndScroll.mjs) - Scan And Scroll 
-- [server/actions/geocode.mjs](server/actions/geocode.mjs) - Google Geocode API 
+- [server/actions/geocode.mjs](server/apis/geocode.mjs) - Google Geocode API 
 - [server/SchemaUpdate.mjs](server/SchemaUpdate.mjs) - Schema Update Script
 - [src/services/ElasticsearchService.js](src/services/ElasticsearchService.js) - Wrapper Functions for Common Queries 
 - [src/components/TweetHeatMap/TweetHeatMap.jsx](src/components/TweetHeatMap/TweetHeatMap.jsx) - ElasticSearch Queries in React  

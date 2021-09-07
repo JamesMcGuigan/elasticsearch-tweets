@@ -1,9 +1,8 @@
 // Bonsai Has a 10,000 document limit, so trim all extraneous entries
 import client from "./client.mjs";
-import {geocode} from "./actions/geocode.mjs";
+import {geocode} from "./apis/geocode.mjs";
 import {sleep} from "./actions/sleep.mjs";
 import yargs from "yargs";
-import jetpack from "fs-jetpack";
 
 async function getIndexSize() {
     return client.cat.indices({
