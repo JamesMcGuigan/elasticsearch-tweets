@@ -13,7 +13,7 @@
       "keyword":  {
         "type": "keyword"
       },
-      "target":   { "type": "byte" }
+      "target":   { "type": "byte" },
     }
   }
 }

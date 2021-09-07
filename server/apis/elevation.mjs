@@ -38,7 +38,7 @@ export async function elevation(coords) {
         });
         const output = _.get(response, 'data.results[0]', null);
         elevation.cache[coords] = output;
-        return output;
+        return output.elevation;
     } catch(exception) {
         console.error("elevation()", exception);
         return null;

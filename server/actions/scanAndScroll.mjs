@@ -30,7 +30,8 @@ export async function scanAndScroll(params, callback) {
     return output;
 }
 
-export async function scanAndScrollField(fieldname, callback) {
+export async function scanAndScrollTextField(fieldname, callback) {
+    // NOTE: Assumes that field is a text field, as this is implied by the regexp
     return await scanAndScroll({
         // https://stackoverflow.com/questions/14745210/create-elasticsearch-curl-query-for-not-null-and-not-empty
         _source: ['id', fieldname],
@@ -56,6 +57,22 @@ export async function scanAndScrollField(fieldname, callback) {
                 //     default_field: '*.*',
                 //     query:         'location: ?*',
                 // },
+            }
+        }
+    }, callback);
+}
+
+export async function scanAndScrollField(fieldname, callback) {
+    return await scanAndScroll({
+        _source: ['id', fieldname],
+        body: {
+            query: {
+                //// Regexp is potentially slow
+                "bool": {
+                    "must": [
+                        { "exists": { "field": fieldname   } },
+                    ]
+                }
             }
         }
     }, callback);

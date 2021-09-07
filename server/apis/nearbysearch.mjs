@@ -5,46 +5,46 @@
 // COORDS=39.7391536,-104.9847034
 // curl -L -X GET "https://maps.googleapis.com/maps/api/place/nearbysearch/json?radius=100&key=$GEOCODE_API_KEY&location=$COORDS"
 // {
-//     "results" : [
+//     "results": [
 //     {
-//         "geometry" : {
-//             "location" : {
-//                 "lat" : 39.7256599,
-//                     "lng" : -104.9862355
+//         "geometry": {
+//             "location": {
+//                 "lat": 39.7256599,
+//                 "lng": -104.9862355
 //             },
-//             "viewport" : {
-//                 "northeast" : {
-//                     "lat" : 39.76038107325997,
-//                         "lng" : -104.94063401457
+//             "viewport": {
+//                 "northeast": {
+//                     "lat": 39.76038107325997,
+//                     "lng": -104.94063401457
 //                 },
-//                 "southwest" : {
-//                     "lat" : 39.69665019391796,
-//                         "lng" : -105.018136900545
+//                 "southwest": {
+//                     "lat": 39.69665019391796,
+//                     "lng": -105.018136900545
 //                 }
 //             }
 //         },
-//         "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png",
-//         "icon_background_color" : "#7B9EB0",
-//         "icon_mask_base_uri" : "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
-//         "name" : "Central",
-//         "photos" : [
+//         "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png",
+//         "icon_background_color": "#7B9EB0",
+//         "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+//         "name": "Central",
+//         "photos": [
 //             {
-//                 "height" : 4032,
-//                 "html_attributions" : [
+//                 "height": 4032,
+//                 "html_attributions": [
 //                     "\u003ca href=\"https://maps.google.com/maps/contrib/113881584177423156913\"\u003eLindsey Lowery\u003c/a\u003e"
 //                 ],
-//                 "photo_reference" : "Aap_uED7YFZK8gfnvkbPs-WrBpyoAfvdKIzx0BIc3D2avtrXCXQBNQpra8y2ViSxeOLPTsW8sKR-37YD7OymmpnSPZJndhuo61ctkQVk25gYK_DnrICtdO0fCOT1skjauGcIdVd9F8VqQaa_RK-HKUuiQatnxF-qQETgPtcpCY_b9aSSG2s_",
-//                 "width" : 3024
+//                 "photo_reference": "Aap_uED7YFZK8gfnvkbPs-WrBpyoAfvdKIzx0BIc3D2avtrXCXQBNQpra8y2ViSxeOLPTsW8sKR-37YD7OymmpnSPZJndhuo61ctkQVk25gYK_DnrICtdO0fCOT1skjauGcIdVd9F8VqQaa_RK-HKUuiQatnxF-qQETgPtcpCY_b9aSSG2s_",
+//                 "width": 3024
 //             }
 //         ],
-//         "place_id" : "ChIJ8UxaWjZ_bIcRslJSzsQj-sI",
-//         "reference" : "ChIJ8UxaWjZ_bIcRslJSzsQj-sI",
-//         "scope" : "GOOGLE",
-//         "types" : [ "neighborhood", "political" ],
-//         "vicinity" : "Denver"
+//         "place_id":  "ChIJ8UxaWjZ_bIcRslJSzsQj-sI",
+//         "reference": "ChIJ8UxaWjZ_bIcRslJSzsQj-sI",
+//         "scope":     "GOOGLE",
+//         "types":     [ "neighborhood", "political" ],
+//         "vicinity":  "Denver"
 //     }
 // ],
-//     "status" : "OK"
+//     "status": "OK"
 // }
 
 
@@ -60,7 +60,7 @@ dotenv.config()
 
 export async function nearbysearch(coords, radius= 100, force= false) {
     coords = encodeASCII(coords);  // BUGFIX: Invalid request. One of the input parameters contains a non-UTF-8 string.
-    if( !force && coords in nearbysearch.cache ) { return nearbysearch.cache[coords] }
+    if( !force && coords in nearbysearch.cache ) { return nearbysearch.cache[coords]; }
     try {
         // COORDS=39.7391536,-104.9847034
         // curl -L -X GET "https://maps.googleapis.com/maps/api/place/nearbysearch/json?radius=100&key=$GEOCODE_API_KEY&location=$COORDS"
@@ -83,13 +83,13 @@ export async function nearbysearch(coords, radius= 100, force= false) {
 }
 
 export async function nearbysearch_extend_placephoto(output, coords) {
-    if( output.photos ) {
+    if( output && output.photos ) {
         output.photos = await Promise.map(output.photos, async (output_photo, index) => {
             // NOTE: photo_reference is dynamically generated on each API call to nearbysearch() and is not a unique cache key
             let cache_id = `${coords}.${output.place_id}.${index}`;
             output_photo.photo_file = await placephoto(output_photo.photo_reference, cache_id);
             return output_photo;
-        })
+        });
     }
     return output;
 }
@@ -108,8 +108,8 @@ process.on('beforeExit', () => {
         .map(key => `${JSON.stringify(key)}: ${JSON.stringify(nearbysearch.cache[key])}`)
         .join(",\n")
     ;
-    output = `{\n${output}\n}`
-    jetpack.write(nearbysearch.cacheFilename, output)
+    output = `{\n${output}\n}`;
+    jetpack.write(nearbysearch.cacheFilename, output);
 });
 
 // // test()
