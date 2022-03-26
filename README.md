@@ -1,6 +1,10 @@
 # Kaggle Tweets with ElasticSearch
 - Visualization: https://tweets.elasticsearch.jamesmcguigan.com
 
+ElasticSearch visualization of the Kaggle Disaster Tweets dataset using React Google Maps. 
+
+CSV enriched with Google API geolocation data,  imported via bulk-upload + scan-and-scroll nodejs data pipeline. Strict json schema, with zero-downtime SchemaUpdate.mjs reindexing script. React Google Maps visualization of the dataset, with dynamic search and filtering UI.  Extensive documentation on ElasticSearch features, queries and upgrade methodology.
+
 ## ElasticSearch Writeups
 - [ElasticSearch Features](ELASTICSEARCH_FEATURES.md)
 - [ElasticSearch Queries](ELASTICSEARCH_QUERIES.md)
