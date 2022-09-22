@@ -32,16 +32,16 @@
         * https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis.html
         * https://www.elastic.co/guide/en/elasticsearch/reference/current/analyzer-anatomy.html
 
+* Character Filters 
+    * HTML Strip Character / Dictionary Mappings / Regular Expressions
+    * https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-charfilters.html
+
 * Analyser
     * https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-analyzers.html
         * The standard analyzer divides text into terms on word boundaries, as defined by the Unicode Text Segmentation algorithm. It removes most punctuation, lowercases terms, and supports removing stop words.
     * Custom Analysers - https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-custom-analyzer.html
     * Regular Expressions - https://www.elastic.co/guide/en/elasticsearch/reference/7.8/analysis-pattern-analyzer.html 
     * Foreign Languages - https://www.elastic.co/guide/en/elasticsearch/reference/7.8/analysis-lang-analyzer.html#french-analyzer 
-
-* Character filters 
-    * HTML Strip Character / Dictionary Mappings / Regular Expressions
-    * https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-charfilters.html
 
 * Tokenizers
     * https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-tokenizers.html
