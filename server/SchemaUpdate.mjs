@@ -1,7 +1,18 @@
 #!/usr/bin/env node
-// Requires Node v14 or --experimental-modules cli flag
-// Usage: node --experimental-modules ./server/SchemaUpdate.mjs  # with .env file
-// Usage: node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
+/***
+ // Source: https://github.com/JamesMcGuigan/elasticsearch-tweets/blob/master/server/SchemaUpdate.mjs
+ // Requires Node v14 or --experimental-modules cli flag
+ // Usage:
+ //   node --experimental-modules ./SchemaUpdate.mjs  # with .env file
+ //   node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
+ //
+ // Logic Flow:
+ // - Check if index exists
+ //   - if not:  upload to @${INDEX}_v1 and alias to ${INDEX}
+ //   - if true: check _meta for ${SHA} hash
+ //     - if unchanged: exit
+ //     - if different: upload to @${INDEX}_v2, reindex, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
+ **/
 
 import elasticsearch from '@elastic/elasticsearch';  // v7.10 is last version to work with AWS/Bonsai servers before ProductNotSupportedError
 import Promise from 'bluebird';
@@ -14,14 +25,6 @@ import sjcl from 'sjcl';
 import yargs from 'yargs';
 
 dotenv.config();
-
-// Logic Flow:
-// - Check if index exists
-//   - if not:  upload to @${INDEX}_v1 and alias to ${INDEX}
-//   - if true: check _meta for ${SHA} hash
-//     - if unchanged: exit
-//     - if different: upload to @${INDEX}_v2, reindex, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
-
 
 
 class SchemaUpdate {
@@ -54,9 +57,10 @@ class SchemaUpdate {
             await this.uploadSchemaWithAlias()
         }
         await this.refresh();
+        await this.printIndexes();
     }
     async doNothing() {
-        await this.refresh();
+        _.noop();
     }
     async uploadSchemaWithAlias() {
         await this.uploadSchema();
@@ -67,6 +71,10 @@ class SchemaUpdate {
         await this.reindex();
         await this.updateAlias();
         await this.deleteOldIndices();
+    }
+    async printIndexes() {
+        await this.client.cat.indices({ s: 'index', 'index': '*,-.*' });
+        await this.client.cat.aliases({ s: 'alias', 'name': '*,-.*' });
     }
 
 
@@ -249,6 +257,7 @@ class SchemaUpdate {
         console.info(`elasticsearch sha256 = ${indexSha256}`);
         console.info(`filesystem    sha256 = ${filesystemSha256}`);
         console.info(`sha256 hashes are equal = ${indexSha256 === filesystemSha256}`);
+        console.info();
         return indexSha256 !== filesystemSha256;
     }
 
@@ -282,14 +291,22 @@ class SchemaUpdate {
                 if( error ) {
                     console.error(JSON.stringify(error,null,4))
                 } else {
-                    console.info(request.meta.request.params.method, request.meta.request.params.path, request.meta.request.params.body || '')
+                    console.info(request.meta.request.params.method,
+                        decodeURIComponent(request.meta.request.params.path),
+                        decodeURIComponent(request.meta.request.params.body || ''));
                 }
             });
             client.on('response', (error, result) => {
                 if( error ) {
-                    console.error(JSON.stringify(error,null,4))
+                    console.error(JSON.stringify(error,null,4));
                 } else {
-                    console.info(JSON.stringify(result.body,null,4), '\n')
+                    if( _.isString(result.body) ) {
+                        console.info(result.body);
+                    } else {
+                        const maxLineLength = 120;
+                        const isMultiline   = Number(JSON.stringify(result.body).length >= maxLineLength);
+                        console.info(JSON.stringify(result.body, null, 4 * isMultiline), '\n');
+                    }
                 }
             });
         }
@@ -299,7 +316,7 @@ class SchemaUpdate {
     async getIndices() {
         try {
             const prefix   = this.getIndexPrefix();
-            const response = await this.client.cat.indices({ format: 'json', s: 'index', 'index': '*' });
+            const response = await this.client.cat.indices({ format: 'json', s: 'index', 'index': '*,-.*' });
             return response.body
                 .map(row => row.index)
                 .filter(index => !index.startsWith('.'))
@@ -311,7 +328,7 @@ class SchemaUpdate {
     async getAliases() {
         try {
             const prefix   = this.getIndexPrefix();
-            const response = await this.client.cat.aliases({ format: 'json', s: 'alias' });
+            const response = await this.client.cat.aliases({ format: 'json', s: 'alias', 'name': '*,-.*' });
             return response.body
                 .map(row => row.alias)
                 .filter(alias => !alias.startsWith('.'))
@@ -339,28 +356,29 @@ class SchemaUpdate {
         return schema
     }
 
+
     // Argv
 
     parseArgv() {
         const argv = yargs
             .usage('Usage: --schema [path] --alias [index] --elasticsearch [url] --username [str] --password [str]')
             .describe('schema', 'path to schema mapping')
-                .default('schema', process.env.SCHEMA)
-                .alias('s', 'schema')
+            .default('schema', process.env.SCHEMA)
+            .alias('s', 'schema')
             .describe('alias', 'name of public-facing alias')
-                .default('alias', process.env.INDEX)
-                .alias('i', 'alias')
-                .alias('a', 'alias')
-                .alias('index', 'alias')
+            .default('alias', process.env.INDEX)
+            .alias('i', 'alias')
+            .alias('a', 'alias')
+            .alias('index', 'alias')
             .describe('elasticsearch', 'elasticsearch url (domain and port)')
-                .default('elasticsearch', process.env.ELASTICSEARCH)
-                .alias('e', 'elasticsearch')
+            .default('elasticsearch', process.env.ELASTICSEARCH)
+            .alias('e', 'elasticsearch')
             .describe('username', 'elasticsearch username')
-                .default('username', process.env.USERNAME)
-                .alias('u', 'username')
+            .default('username', process.env.USERNAME)
+            .alias('u', 'username')
             .describe('password', 'elasticsearch password')
-                .default('password', process.env.PASSWORD)
-                .alias('p', 'password')
+            .default('password', process.env.PASSWORD)
+            .alias('p', 'password')
             .option('force', {
                 alias: 'f',
                 type: 'boolean',
@@ -368,8 +386,8 @@ class SchemaUpdate {
                 default: false
             })
             .count('verbose')
-                .default('verbose', 1)
-                .alias('v', 'verbose')
+            .default('verbose', 1)
+            .alias('v', 'verbose')
             .argv;
 
         argv.elasticsearch = argv.elasticsearch || '';  // BUGFIX: linter
