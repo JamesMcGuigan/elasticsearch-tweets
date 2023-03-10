@@ -33,6 +33,7 @@
     "react-spinners": "^0.8.3",
     "sjcl": "^1.0.8",
     "text-encoding": "^0.7.0",
+    "upath": "^2.0.1",
     "utf8": "^3.0.0",
     "webpack": "^4.43.0",
     "yargs": "^15.3.1"

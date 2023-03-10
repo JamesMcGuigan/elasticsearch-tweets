@@ -1,28 +1,31 @@
 #!/usr/bin/env node
 /***
- // Source: https://github.com/JamesMcGuigan/elasticsearch-tweets/blob/master/server/SchemaUpdate.mjs
- // Requires Node v14 or --experimental-modules cli flag
- // Usage:
- //   node --experimental-modules ./SchemaUpdate.mjs  # with .env file
- //   node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
- //
- // Logic Flow:
- // - Check if index exists
- //   - if not:  upload to @${INDEX}_v1 and alias to ${INDEX}
- //   - if true: check _meta for ${SHA} hash
- //     - if unchanged: exit
- //     - if different: upload to @${INDEX}_v2, reindex, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
- **/
+// Source: https://github.com/JamesMcGuigan/elasticsearch-tweets/blob/master/server/SchemaUpdate.mjs
+// Requires Node v14 or --experimental-modules cli flag
+// Usage:
+//   node --experimental-modules ./SchemaUpdate.mjs  # with .env file
+//   node --experimental-modules ./server/SchemaUpdate.mjs --schema ./server/schema.json5 --alias twitter --elasticsearch https://kaggle-tweets-7601590568.eu-west-1.bonsaisearch.net:443 -v
+//
+// Logic Flow:
+// - Check if index exists
+//   - if not:  upload to @${INDEX}_v1 and alias to ${INDEX}
+//   - if true: check _meta for ${SHA} hash
+//     - if unchanged: exit
+//     - if different: upload to @${INDEX}_v2, reindex, wait for success, alias to ${INDEX}, delete _${INDEX}_v2
+**/
 
-import elasticsearch from '@elastic/elasticsearch';  // v7.10 is last version to work with AWS/Bonsai servers before ProductNotSupportedError
+import elasticsearch from '@elastic/elasticsearch'; // v7.10 is last version to work with AWS/Bonsai servers before ProductNotSupportedError
 import Promise from 'bluebird';
-import dotenv from 'dotenv-override-true';  // BUGFIX: process.env.USERNAME
+import dotenv from 'dotenv-override-true'; // BUGFIX: process.env.USERNAME
 import jetpack from 'fs-jetpack';
 import jsonKeysSort from 'json-keys-sort';
 import json5 from 'json5';
 import _ from 'lodash';
 import sjcl from 'sjcl';
 import yargs from 'yargs';
+import * as path from 'path';
+import upath from 'upath';
+
 
 dotenv.config();
 
@@ -32,32 +35,50 @@ class SchemaUpdate {
     constructor(argv={}) {
         this.argv   = { ...this.parseArgv(), ...argv };
         this.alias  = this.argv.alias;  // NOTE: this may also be defined as --index or env.INDEX
-        this.schema = this.readSchema(this.argv.schema)
     }
-    async init() {
-        this.client  = this.getClient(this.argv);
+    async initClient() {
+        this.client = this.getClient(this.argv);
+        this.schema = await this.readSchema(this.argv.schema);
+    }
+    async initIndices() {
         await this.client.ping();
         this.indices = await this.getIndices();
         this.aliases = await this.getAliases();
         this.indicesAndAliases = [ ...this.indices, ...this.aliases ]
     }
 
-
     // Top Level Actions
 
     async run() {
-        if( !this.client ) { await this.init(); }
-        if( this.aliasExists() || this.aliasIsIndex() ) {
-            if( this.argv.force || await this.schemaNeedsUpdating() ) {
-                await this.uploadSchemaAnReindex();
-            } else {
-                await this.doNothing()
+        try {
+            await this.initClient();  // avoid printing ES queries here
+            if (this.argv.print || this.argv.check ) {
+                if (this.argv.print) { await this.printSchema(); }
+                if (this.argv.check) { await this.checkSchema(); }
+                return;
             }
-        } else {
-            await this.uploadSchemaWithAlias()
+
+            await this.initIndices();
+            if (this.aliasExists() || this.aliasIsIndex()) {
+                if (this.argv.force || await this.schemaNeedsUpdating()) {
+                    await this.uploadSchemaAnReindex();
+                } else {
+                    await this.doNothing()
+                }
+            } else {
+                await this.uploadSchemaWithAlias()
+            }
+            await this.refresh();
+            await this.printIndexes();
+        } catch(error) {
+            await this.printIndexes();
+            console.error("----------\nEXCEPTION\n", {
+                schema: this.argv.schema,
+                index:  this.argv.index,
+                elasticsearch: this.argv.elasticsearch,
+                exception: error
+            }, "\n----------");
         }
-        await this.refresh();
-        await this.printIndexes();
     }
     async doNothing() {
         _.noop();
@@ -75,6 +96,13 @@ class SchemaUpdate {
     async printIndexes() {
         await this.client.cat.indices({ s: 'index', 'index': '*,-.*' });
         await this.client.cat.aliases({ s: 'alias', 'name': '*,-.*' });
+    }
+    async printSchema() {
+        console.info(JSON.stringify(this.schema, null, 2));
+    }
+    async checkSchema() {
+        await this.printIndexes();
+        await this.schemaNeedsUpdating();
     }
 
 
@@ -96,7 +124,7 @@ class SchemaUpdate {
         // DOCS: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#_indices_create
         // noinspection UnnecessaryLocalVariableJS
         try {
-            const response = await this.client.indices.create({
+            await this.client.indices.create({
                 index: index,
                 body:  schema,
                 timeout: "1d",
@@ -105,7 +133,11 @@ class SchemaUpdate {
         } catch(error) {
             if( _.get(error, 'name') === 'TimeoutError' ) {
                 await this.waitForIndex(index);
-            } else {
+            }
+            else if( _.get(error, 'name') === 'ResponseError' ) {
+                throw new Error("ElasticSearch reports invalid schema.json");
+            }
+            else {
                 return null;
             }
         }
@@ -264,12 +296,34 @@ class SchemaUpdate {
 
     // Lookups
 
-    readSchema(filename) {
-        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-templates.html
-        let schema = json5.parse(jetpack.read(filename));
+    async readSchema(filename) {
+        let schema;
+        if (filename.match(/\.m?js$/)) {
+            schema = await this.importJs(filename);
+        }
+        else {  // if filename.match(/\.json5?$/)
+            schema = json5.parse(jetpack.read(filename));
+        }
+
+        // DOCS: https://www.elastic.co/guide/en/elasticsearch/reference/7.10/index-templates.html
         schema = _.omit(schema, ["index_patterns"]);
-        return _.get(schema, "template") || schema;  // extract schema from template
+        schema = _.get(schema, "template") || schema;  // extract schema from template
+        return schema;
     }
+
+    async importJs(filename) {
+        try {
+            // import() requires relative unix path with ./ prefix
+            filename = path.relative(process.cwd(), filename);
+            filename = upath.normalizeSafe(`./${filename}`);
+            const schema = (await import(filename)).default;
+            return schema;
+        } catch(exception) {
+            throw new ReferenceError(`SchemaUpdate::readJs('${filename}'): failed to parse schema: ${exception.message}`);
+        }
+    }
+
+
 
     getClient() {
         // BUGFIX: allow 'https://' prefix to be optional for CLI or .env args
@@ -291,9 +345,11 @@ class SchemaUpdate {
                 if( error ) {
                     console.error(JSON.stringify(error,null,4))
                 } else {
-                    console.info(request.meta.request.params.method,
+                    console.info(
+                        request.meta.request.params.method,
                         decodeURIComponent(request.meta.request.params.path),
-                        decodeURIComponent(request.meta.request.params.body || ''));
+                        decodeURIComponent(request.meta.request.params.body || '')
+                    );
                 }
             });
             client.on('response', (error, result) => {
@@ -340,7 +396,8 @@ class SchemaUpdate {
 
     getSchemaMapping(schema) {
         // ElasticSearch v6 syntax requires "mappings.doc", but this "doc" is optional in v7+
-        if(       "doc" in schema.mappings ) { return _.get(schema, 'mappings.doc');  }
+        if(    !schema || !schema.mappings ) { return {}; }
+        else if(  "doc" in schema.mappings ) { return _.get(schema, 'mappings.doc');  }
         else if( "_doc" in schema.mappings ) { return _.get(schema, 'mappings._doc'); }
         else                                 { return _.get(schema, 'mappings');      }
     }
@@ -363,38 +420,48 @@ class SchemaUpdate {
         const argv = yargs
             .usage('Usage: --schema [path] --alias [index] --elasticsearch [url] --username [str] --password [str]')
             .describe('schema', 'path to schema mapping')
-            .default('schema', process.env.SCHEMA)
-            .alias('s', 'schema')
+                .default('schema', process.env.SCHEMA)
+                .alias('s', 'schema')
             .describe('alias', 'name of public-facing alias')
-            .default('alias', process.env.INDEX)
-            .alias('i', 'alias')
-            .alias('a', 'alias')
-            .alias('index', 'alias')
+                .default('alias', process.env.INDEX)
+                .alias('i', 'alias')
+                .alias('a', 'alias')
+                .alias('index', 'alias')
             .describe('elasticsearch', 'elasticsearch url (domain and port)')
-            .default('elasticsearch', process.env.ELASTICSEARCH)
-            .alias('e', 'elasticsearch')
+                .default('elasticsearch', process.env.ELASTICSEARCH)
+                .alias('e', 'elasticsearch')
             .describe('username', 'elasticsearch username')
-            .default('username', process.env.USERNAME)
-            .alias('u', 'username')
+                .default('username', process.env.USERNAME)
+                .alias('u', 'username')
             .describe('password', 'elasticsearch password')
-            .default('password', process.env.PASSWORD)
-            .alias('p', 'password')
+                .default('password', process.env.PASSWORD)
+                .alias('p', 'password')
             .option('force', {
                 alias: 'f',
                 type: 'boolean',
                 description: 'force reindex even without schema changes',
                 default: false
             })
+            .option('print', {
+                type: 'boolean',
+                description: 'only print filesystem schema to console',
+                default: false
+            })
+            .option('check', {
+                type: 'boolean',
+                description: 'only validate sha256 hashes',
+                default: false
+            })
             .count('verbose')
-            .default('verbose', 1)
-            .alias('v', 'verbose')
+                .default('verbose', 1)
+                .alias('v', 'verbose')
             .argv;
 
         argv.elasticsearch = argv.elasticsearch || '';  // BUGFIX: linter
         if( !argv.alias         ) { throw Error(`SchemaUpdate: --alias not defined: ${argv}`); }
         if( !argv.elasticsearch ) { throw Error(`SchemaUpdate: --elasticsearch not defined: ${argv}`); }
         if( !argv.schema        ) { throw Error(`SchemaUpdate: --schema not defined: ${argv}`); }
-        if( jetpack.exists(argv.schema) !== 'file' ) { throw Error(`SchemaUpdate: invalid schema file: ${argv.schema}`); }
+        if( jetpack.exists(argv.schema) !== 'file' ) { throw Error(`SchemaUpdate: --schema is not a file: ${argv.schema}`); }
 
         return argv;
     }
